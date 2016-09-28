@@ -91,6 +91,8 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 
 \(		return LEFT_PAREN;
 \)		return RIGHT_PAREN;
+\[		return LEFT_BRACKET;
+\]		return RIGHT_BRACKET;
 
 
 pi		{ yylval.v = gsl_complex_rect (M_PI, 0.0); return NUMBER; }

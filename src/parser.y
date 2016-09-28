@@ -9,8 +9,6 @@
 #include "printext.h"
 #include "node.h"
 #include "eval.h"
-//char *strdup(const char *s);
-
 
 #define YYDEBUG 1
 
@@ -36,8 +34,11 @@ void yyerror (char const *);
 %right <d> BIF
 %token     LEFT_PAREN
 %token     RIGHT_PAREN
+%token     LEFT_BRACKET
+%token     RIGHT_BRACKET
 %token     COMMA
 %type  <n> phrase
+%type  <n> vector
 %type  <i> eof
 				
 %debug
@@ -72,6 +73,13 @@ phrase:   STRING  { $$ = create_string_node (TYPE_STRING, $1); }
 	| BIF LEFT_PAREN phrase RIGHT_PAREN
 		{ $$ = create_monadic_node ($1, $3); }
 	| LEFT_PAREN phrase RIGHT_PAREN { $$ = $2; }
+	| LEFT_BRACKET vector RIGHT_BRACKET { $$ = $2; }
+	;
+
+vector  : /* empty */
+		{ $$ = create_complex_vector_node (); }
+	| vector NUMBER
+		{ $$ = append_complex_vector_node ($1, $2); }
 	;
 
 %%

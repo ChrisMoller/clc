@@ -39,6 +39,37 @@ static node_type_s null_node = { TYPE_NULL };
 
 
 node_u
+create_complex_vector_node ()
+{
+  node_cpx_vector_s *node = malloc (sizeof(node_cpx_vector_s));
+  node_cpx_vector_type (node) = TYPE_CPX_VECTOR;
+  node_cpx_vector_rows (node) = -1;
+  node_cpx_vector_cols (node) = -1;
+  node_cpx_vector_max (node)  = 0;
+  node_cpx_vector_next (node) = 0;
+  node_cpx_vector_data (node) = NULL;
+  return (node_u)node;
+}
+
+node_u
+append_complex_vector_node (node_u vector, gsl_complex v)
+{
+  // printf ("type = %d\n", get_type (vector));
+  if (get_type (vector) == TYPE_CPX_VECTOR) {
+    node_cpx_vector_s *node = node_cpx_vector (vector);
+    if (node_cpx_vector_max (node) <= node_cpx_vector_next (node)) {
+      node_cpx_vector_max (node) += NODE_CPX_VECTOR_INCR;
+      node_cpx_vector_data (node) =
+	realloc (node_cpx_vector_data (node),
+		 node_cpx_vector_max (node) * sizeof(gsl_complex));
+    }
+    node_cpx_vector_data (node)[node_cpx_vector_next (node)++] = v;
+    return (node_u)node;
+  }
+  return vector;
+}
+
+node_u
 create_string_node (type_e type, const char *s)
 {
   node_string_s *node = malloc (sizeof(node_string_s));
@@ -84,11 +115,12 @@ do_eval (node_u node)
   node_u rc = (node_u)(&null_node);
   switch(get_type (node)) {
   case TYPE_NULL:
-  case TYPE_LIST:
     break;
   case TYPE_COMPLEX:
   case TYPE_LITERAL:
   case TYPE_STRING:
+  case TYPE_LIST:
+  case TYPE_CPX_VECTOR:
     rc = node;
     break;
   case TYPE_DYADIC:
@@ -214,6 +246,15 @@ void
 print_node (node_u node)
 {
   switch(get_type (node)) {
+  case TYPE_CPX_VECTOR:
+    {
+      node_cpx_vector_s *vs = node_cpx_vector (node);
+      fprintf (stdout, "[ ");
+      for (int i = 0; i < node_cpx_vector_next (vs); i++)
+	fprintf (stdout, "%R ", &node_cpx_vector_data (vs)[i]);
+      fprintf (stdout, "]\n");
+    }
+    break;
   case TYPE_COMPLEX:
     {
       node_complex_s *vs = node_complex (node);
@@ -249,6 +290,9 @@ void
 free_node (node_u node)
 {
   switch(get_type (node)) {
+  case TYPE_CPX_VECTOR:
+    // fixme
+    break;
   case TYPE_LIST:
     {
       node_list_s *list = node_list (node);

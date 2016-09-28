@@ -1,6 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include <gsl/gsl_matrix_complex_double.h>
 
 #undef ENTRY
 #define ENTRY(l,s,d,m,dc,mc,dd,md) s
@@ -14,6 +15,7 @@ struct _node_complex_s;
 struct _node_dyadic_s;
 struct _node_mondic_s;
 struct _node_list_s;
+struct _node_cpx_vector_s;
 
 typedef struct _node_type_type		node_type_s;
 typedef struct _node_string_type	node_string_s;
@@ -21,6 +23,7 @@ typedef struct _node_complex_type	node_complex_s;
 typedef struct _node_dyadic_type	node_dyadic_s;
 typedef struct _node_monadic_type	node_monadic_s;
 typedef struct _node_list_type		node_list_s;
+typedef struct _node_cpx_vector_type	node_cpx_vector_s;
 
 
 typedef union _node_u {
@@ -30,13 +33,15 @@ typedef union _node_u {
   node_dyadic_s		*d;
   node_monadic_s	*m;
   node_list_s		*l;
+  node_cpx_vector_s	*v;
 } node_u;
-#define node_type(n)	((n).t)
-#define node_complex(n)	((n).c)
-#define node_string(n)	((n).s)
-#define node_dyadic(n)	((n).d)
-#define node_monadic(n)	((n).m)
-#define node_list(n)	((n).l)
+#define node_type(n)		((n).t)
+#define node_complex(n)		((n).c)
+#define node_string(n)		((n).s)
+#define node_dyadic(n)		((n).d)
+#define node_monadic(n)		((n).m)
+#define node_list(n)		((n).l)
+#define node_cpx_vector(n)	((n).v)
 
 typedef enum {
   TYPE_NULL,
@@ -46,6 +51,7 @@ typedef enum {
   TYPE_DYADIC,
   TYPE_MONADIC,
   TYPE_LIST,
+  TYPE_CPX_VECTOR,
 } type_e;
 
 #define TYPE_GEN(l,r)  ((100 * (l)) + (r))
@@ -107,5 +113,21 @@ struct _node_list_type {
 #define node_list_max(n)	((n)->max)
 #define node_list_next(n)	((n)->next)
 #define NODE_LIST_INCR	16
+
+struct _node_cpx_vector_type {
+  type_e	 type;
+  int		 rows;
+  int		 cols;
+  int		 max;
+  int		 next;
+  gsl_complex	*data;
+};
+#define node_cpx_vector_type(n)	((n)->type)
+#define node_cpx_vector_rows(n)	((n)->rows)
+#define node_cpx_vector_cols(n)	((n)->cols)
+#define node_cpx_vector_max(n)	((n)->max)
+#define node_cpx_vector_next(n)	((n)->next)
+#define node_cpx_vector_data(n)	((n)->data)
+#define NODE_CPX_VECTOR_INCR 16
 
 #endif /* NODE_H */
