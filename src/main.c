@@ -20,7 +20,7 @@ typedef struct {
   const char *monadic_desc;
 } desc_table_s;
 #undef ENTRY
-#define ENTRY(l,s,d,m,dd,md) {l, dd, md}
+#define ENTRY(l,s,d,m,dc,mc,dd,md) {l, dd, md}
 desc_table_s desc_table[] = {
 #include "opsdata.h"
 };

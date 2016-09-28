@@ -3,7 +3,7 @@
 
 
 #undef ENTRY
-#define ENTRY(l,s,d,m,dd,md) s
+#define ENTRY(l,s,d,m,dc,mc,dd,md) s
 typedef enum {
 #include "opsdata.h"
 } sym_e;

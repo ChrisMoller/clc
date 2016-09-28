@@ -19,17 +19,21 @@ typedef gsl_complex (*cpx_monadic)(gsl_complex a);
 typedef node_u (*clc_dyadic)(node_u la, node_u ra);
 
 typedef struct {
-  /*cpx_dyadic*/ void *dyadic;
-  /*cpx_monadic*/ void *monadic;
+  void *dyadic;		/*cpx_dyadic*/
+  void *monadic;	/*cpx_monadic*/
+  int   nr_dyadic_args;
+  int   nr_monadic_args;
 } ops_s;
 
 #undef ENTRY
-#define ENTRY(l,s,d,m,dd,md) {d, m}
+#define ENTRY(l,s,d,m,dc,mc,dd,md) {d, m, dc, mc}
 ops_s op_table[] = {
 #include "opsdata.h"
 };
-#define op_dyadic(s)  op_table[s].dyadic
-#define op_monadic(s) op_table[s].monadic
+#define op_dyadic(s)		op_table[s].dyadic
+#define op_monadic(s)		op_table[s].monadic
+#define op_nr_dyadic(s)		op_table[s].nr_dyadic_args
+#define op_nr_monadic(s)	op_table[s].nr_monadic_args
 
 static node_type_s null_node = { TYPE_NULL };
 
@@ -167,7 +171,34 @@ do_eval (node_u node)
 	}
 	break;
       case TYPE_LIST:
-	printf ("type list\n");
+	{
+	  if (sym >= 0 && sym < SYM_COUNT) {
+	    node_list_s *list = node_list (arg);
+	    int nr_args = node_list_next(list);
+	    switch(nr_args) {
+	    case 2:
+	      {
+		if (op_nr_dyadic (sym) == 2) {
+		  node_u a0 = do_eval (node_list_list (list)[0]);
+		  node_u a1 = do_eval (node_list_list (list)[1]);
+		  if (get_type (a0) == TYPE_COMPLEX &&
+		      get_type (a1) == TYPE_COMPLEX) {
+		    cpx_dyadic op = op_dyadic (sym);
+		    node_complex_s *v0 = node_complex (a0);
+		    node_complex_s *v1 = node_complex (a1);
+		    gsl_complex vv = (*op)(node_complex_value (v0),
+					   node_complex_value (v1));
+		    rc = create_complex_node (vv);
+		  }
+		}
+	      }
+	      break;
+	    default:
+	      break;
+	    }
+	    
+	  }
+	}
 	break;
       default:
 	// fixme -- 
