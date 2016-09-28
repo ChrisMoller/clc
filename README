@@ -1,0 +1,292 @@
+clc is a command line calculator that supports vectors and matrices.  It can
+do things like:
+
+   clc "<(e^(pi * .2j * :6))
+       0 36 72 108 144 180
+
+which means "take the phase (<) of the complex vector yielded by
+raising e to the vector resulting from the product of pi times .2i
+times the elements of the vector [0 1 2 3 4 5]"
+
+and
+
+    clc "asin (sin (15*:8))"
+    	0 15 30 45 60 75 90 75
+
+i.e., "take the arcsine of the sine of the vector [0 15 30 45 60 75 90 75]"
+
+
+Supported operations, subject to change without notice:
+
+
+	MONADIC	      	      	 	  DYADIC
+
+
++       				add
+-	negate			        subtract
+*				        multiply
+/	invert			        divide
+
+!	gamma
+?	rand				
+^	exp			        power
+exp	exp
+
+
+|     	logical any	       	        logical or
+&	logical all			logical and
+^	logical one			logical xor
+!	logical not
+
+<=					less than/eq
+>=					greater than/eq
+=					equal
+!=					not equal
+>					greater than
+<	phase				less than
+arg	phase
+abs	magnitude
+mag	magnitude
+|	magnitude
+
+\+					dot product
+\^					
+\/	matrix invert			matrix solve
+\*	       				matrix product
+<>	axis transpose			transpoose
+
+,	ravel				catenate
+#	rho				reshape
+det	determinant
+
+/+	vector sum			(matrix sum on axis)
+Sigma	vector sum
+/*	vector product			(matrix product on axis)
+Pi	vector product
+
+->					associate
+:=					assign
+
+~	negate
+:	0-range				range
+@	loop(*)				loop(*)
+
+log10	log base 10
+log	log base e
+ln	log base e
+conj	complex conjugate
+gamma	gamma
+lgamma	log gamma
+
+sinh	hyperbolic sine
+cosh	hyperbolic cosine
+tanh	hyperbolic tangent
+asinh	hyperbolic arcsine
+acosh	hyperbolic arccosine
+atanh	hyperbolic arctangent
+
+sin	sine      
+cos	cosine    
+tan	tangent   
+asin	arcsine   
+acos	arccosine 
+atan	arctangent
+
+
+pi	pi (3.14159...)
+e	e  (2.71828...)
+
+TRUE	logical true
+true	logical true
+FALSE	logical false
+false	logical false
+
+
+plot					plot
+
+(*) not yet implemented
+
+
+
+Matrix and vector ops are supported; matrix and vectors can be entered
+from the command line either in an APL-similar format
+
+     clc "(2 3)#(1 2 3 4 5 6)"
+
+             1 2 3 
+             4 5 6
+
+or literally:
+
+     clc "[[ 1 2 3][4 5 6]]"
+     
+             1 2 3 
+             4 5 6
+
+
+
+plot is a kind of dyadic operator, the left argument of which is a list of
+parameters controlling the plot and the right argument is a vector is a vector
+or an n-by-m matrix containing the data to be plotted.  The parameters are
+either keywords or associations of the form keyword -> value.  For example,
+the following script creates an image containing a couple of cycles of sine
+and cosine curves:
+
+========================================================================
+
+samples := 72
+
+phase := 20
+
+angles := (720/samples)*((-samples/2):samples)
+
+@@ (This creates a vector of length <samples> (the ":samples" term) starting
+@@ at the value -samples/2, then multiplies every element of that vector by
+@@ the value 720/samples, resulting in a vector [-360, -350,.. -340.. 350])
+@@ (@@ is a comment start similar to the C++ //)
+
+("xlabel" -> "X", "ylabel"-> "Y", "title" -> "Sine and cosine plot", \
+     "width" -> 480, "height" -> 360, "bgcolour" -> (5,60,7), \
+     "fgcolour" -> (1, "green"), \
+     "fgcolour" -> (2, "#x334455"), "filename" -> "sincos.png") \
+     plot ((2, samples)#(sin(angles+phase), cos(angles)))
+
+@@ (A terminal \ in a script is a line-continuation character.)
+@@ What all this does is set labels and the width and height of the plot.
+@@ The bgcolour association sets the background colour using a standard
+@@ RGB triplet; the fgcolour associations set colour table entries 1 and 2
+@@ respectively using a named colour specification and an HTML colour code.
+@@ (The colour table entries are used in order from index 1 through index 15
+@@ by successive curves on the same plot; index 0 contains the background
+@@ colour.)  The right argument creates a 2xn matrix with the first row the
+@@ sines of the angles vector "angles" plus a 20-degree phase shift, and a
+@@ second of the cosines of that vector.
+
+========================================================================
+
+The following is a list of presently supported parameters.
+
+Keywords:
+
+cartesian				Set cartesian graph
+rectangular				Synonym for cartesian
+polar					Set polar plot(*)
+piechart				Set piechart(*)
+barchart				Set barchart(*)
+logx					Set logarithmic X axis
+logy					Set logarithmic Y axis
+grid					Enable grid
+
+Associations:
+
+xaxis -> <integer>			If the right argument is an nxm
+      	 				matrix, selects a row to be used
+					for common x coordinates while
+					the other rows will be used as
+					the y coordinates for multiple
+					curves.  If this association is
+					omitted, x values will be assumed
+					to be integers 0 through m, where
+					m is the number of matrix columms.
+					(If the right argument is a vector,
+					the x values will be generated by
+					the same mechanism.)
+
+xlabel -> <string>			Axis labels and graph title
+ylabel -> <string>
+title  -> <string>
+
+width  -> <integer>			Dimensions in pixels of the plot
+height -> <integer>			image.
+geometry -> <integer vector>		A two-element vector of the plot
+	    	     			width and height
+
+text -> (<float>, <float>, <float>, <float>, <float>, <string>)
+     		  	   	    	Puts arbitrary text on the plot.
+     		  	   	    	The parameters are, in order:
+					1, 2: The x and y coordinates, in
+					user-space, of the text.
+					3, 4: A directional vector with
+					respect to the position coordinates
+					specifying the axis on which the text
+					will be drawn.
+					5: A justification specification in the
+					range 0.0 to 1.0 specifying the
+					relative offset to the text origin.
+					0.0 is fully left-justified, 1.0
+					right-justified, 0.5 centred, and so on.
+					6: The text to be drawn.
+					Any number of theses associations can
+					be set for a plot.
+
+bgcolour -> <bgcolourspec>		Sets the plot background colour.  The
+	    				bgcolourspec is of one of three forms:
+					1:  A three-element integer vector
+					where each element is in the range of
+					0 to 255 specifying, in order, the
+					red, green, and blue values.
+					2: A string of the form #rrggbb where
+					the rr, gg, and bb values are
+					hexadecimal numbers in the range 00 to
+					ff (0 to 255), as above.
+					3: A string containing a colour name.
+bgcolor -> <bgcolourspec>		A synonym for bgcolour.
+
+fgcolour -> <fgcolourspec>		Sets the foreground colours of the
+	    				curves.  The fgcolourspec is of one
+					of two forms:
+					1: A four-element vector the first
+					element is an index in the range 1 to
+					15, where the index will be
+					subsequently used identify the colour.
+					The remaining values are as described
+					for the bgcolourspec above.
+					2: A list with an initial integer
+					specifying an index as above,
+					followed by a string as described for
+					the bgcolourspec.
+fgcolor -> <fgcolourspec>		A synonym for fgcolour.
+
+filename -> <string>			Sets a filename for the plot image.
+	    				If this association isn't set, the
+					plot will be displayed on the screen.
+					
+
+
+(*) not yet implemented
+
+
+At the moment, clc accepts two environmental settings:
+
+set prompt <string>	       		Sets the command-line prompt to
+    	   				the specified string.  If the given
+					string is <TAB>, use a single tab
+					character as the prompt.
+
+set andgle <string>			If the given string starts with 'r'
+    	   				or 'R', assume that angles are given
+					in radians.  Otherwise, assume degrees.
+					The default is degrees; I'm an
+					engineer, not a mathematician or
+					a physicist.  Regardless of that
+					assumption, any numeric value appended
+					by the character 'd' or 'D' will be
+					assumed to represent an angle and
+					interpreted as degrees.
+
+					These settings can be made persistent
+					in a file ~/.clc/settings, such as:
+
+					   set PROMPT <TAB>
+					   set ANGLE Degrees
+
+
+					   
+As far as clc is concerned, all numbers are complex and may be entered in the
+form R+Ij where R and I are of any standard numeric form (integer, fractional,
+expoential...) and the 'j' and be of either case and may be replaced by 'i' or
+'I'.
+
+Strings may be entered either with or without quotes.  If unquoted, an attempt
+will be made to treat them as symbols; if unassigned, the value will be the
+literal value of the string.
