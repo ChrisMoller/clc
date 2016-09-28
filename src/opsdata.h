@@ -8,6 +8,8 @@
 	 "divide", "invert"),
   ENTRY ("^", SYM_HAT,     gsl_complex_pow,   gsl_complex_exp,
 	 "power", "exp"),
+  ENTRY (",", SYM_COMMA,   clc_catenate,      NULL,
+	 "power", "exp"),
   ENTRY ("sin", SYM_SIN,     NULL,              gsl_complex_sin,
 	 NULL, "sin"),
   ENTRY ("cos", SYM_COS,     NULL,              gsl_complex_cos,

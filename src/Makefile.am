@@ -5,6 +5,7 @@ clc_SOURCES = main.c \
               opsdata.h node.h \
               printext.c printext.h \
               eval.c eval.h \
+              vector.c vector.h \
               parser.y lexer.l
 
 DISTCLEANFILES = .deps/*.P

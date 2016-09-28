@@ -12,13 +12,15 @@
 
 #include "printext.h"
 #include "node.h"
+#include "vector.h"
 
 typedef gsl_complex (*cpx_dyadic)(gsl_complex a, gsl_complex b);
 typedef gsl_complex (*cpx_monadic)(gsl_complex a);
+typedef node_u (*clc_dyadic)(node_u la, node_u ra);
 
 typedef struct {
-  cpx_dyadic  dyadic;
-  cpx_monadic monadic;
+  /*cpx_dyadic*/ void *dyadic;
+  /*cpx_monadic*/ void *monadic;
 } ops_s;
 
 #undef ENTRY
@@ -29,7 +31,7 @@ ops_s op_table[] = {
 #define op_dyadic(s)  op_table[s].dyadic
 #define op_monadic(s) op_table[s].monadic
 
-node_type_s null_node = { TYPE_NULL };
+static node_type_s null_node = { TYPE_NULL };
 
 
 node_u
@@ -51,12 +53,13 @@ create_complex_node (gsl_complex v)
 }
 
 node_u
-create_dyadic_node (node_u la, sym_e op, node_u ra)
+create_dyadic_node (node_u la, sym_e op, op_type_e op_type, node_u ra)
 {
   node_dyadic_s *node = malloc (sizeof(node_dyadic_s));
   node_dyadic_type (node) = TYPE_DYADIC;
   node_dyadic_la (node) = la;
   node_dyadic_op (node) = op;
+  node_dyadic_op_type (node) = op_type;
   node_dyadic_ra (node) = ra;
   return (node_u)node;
 }
@@ -77,6 +80,7 @@ do_eval (node_u node)
   node_u rc = (node_u)(&null_node);
   switch(get_type (node)) {
   case TYPE_NULL:
+  case TYPE_LIST:
     break;
   case TYPE_COMPLEX:
   case TYPE_LITERAL:
@@ -89,6 +93,13 @@ do_eval (node_u node)
       node_u la = do_eval (node_dyadic_la (dyad));
       node_u ra = do_eval (node_dyadic_ra (dyad));
       sym_e sym = node_dyadic_op (dyad);
+      op_type_e op_type = node_dyadic_op_type (dyad);
+
+      if (op_type == OP_TYPE_CLC) {
+	clc_dyadic op = op_dyadic (sym);
+	if (op) rc = (*op)(la, ra);
+	return rc;
+      }
 
       switch(TYPE_GEN (get_type (la), get_type (ra))) {
       case TYPE_GEN (TYPE_COMPLEX, TYPE_COMPLEX):
@@ -155,6 +166,9 @@ do_eval (node_u node)
 	  }
 	}
 	break;
+      case TYPE_LIST:
+	printf ("type list\n");
+	break;
       default:
 	// fixme -- 
 	break;
@@ -186,6 +200,13 @@ print_node (node_u node)
   case TYPE_NULL:
     fprintf (stdout, "''\n");
     break;
+  case TYPE_LIST:
+    {
+      node_list_s *list = node_list (node);
+      for (int i = 0; i < node_list_next (list); i++) 
+	print_node (node_list_list (list)[i]);
+    }
+    break;
   case TYPE_STRING:
   case TYPE_DYADIC:
   case TYPE_MONADIC:
@@ -197,6 +218,16 @@ void
 free_node (node_u node)
 {
   switch(get_type (node)) {
+  case TYPE_LIST:
+    {
+      node_list_s *list = node_list (node);
+      if (list) {
+	for (int i = 0; i < node_list_next (list); i++) 
+	  free_node (node_list_list (list)[i]);
+	free (list);
+      }
+    }
+    break;
   case TYPE_STRING:
     // fixme -- free referred val here then fall through
   case TYPE_LITERAL:

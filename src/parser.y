@@ -31,10 +31,9 @@ void yyerror (char const *);
 %token <v> NUMBER
 %token <s> STRING
 %token <s> QSTRING
-%left  <d> LEFT_DYADIC
+%left  <d> RIGHT_DYADIC
+%left  <d> RIGHT_CLC_DYADIC
 %right <d> BIF
-%right <d> BIF2
-%right <d> BIF2R
 %token     LEFT_PAREN
 %token     RIGHT_PAREN
 %token     COMMA
@@ -65,13 +64,13 @@ eof     : EOS { $$ = 1; }
 phrase:   STRING  { $$ = create_string_node (TYPE_STRING, $1); }
 	| QSTRING { $$ = create_string_node (TYPE_LITERAL, $1); }
 	| NUMBER  { $$ = create_complex_node ($1); }
-	| phrase LEFT_DYADIC phrase { $$ = create_dyadic_node ($1, $2, $3); }
-	| LEFT_DYADIC phrase { $$ = create_monadic_node ($1, $2); }
-	| BIF LEFT_PAREN phrase RIGHT_PAREN { $$ = create_monadic_node ($1, $3); }
-	| BIF2 LEFT_PAREN phrase COMMA phrase RIGHT_PAREN 
-                 { $$ = create_dyadic_node ($3, $1, $5); }
-	| BIF2R LEFT_PAREN phrase COMMA phrase RIGHT_PAREN 
-                 { $$ = create_dyadic_node ($5, $1, $3); }
+	| phrase RIGHT_DYADIC phrase
+		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3); }
+	| phrase RIGHT_CLC_DYADIC phrase
+		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3); }
+	| RIGHT_DYADIC phrase { $$ = create_monadic_node ($1, $2); }
+	| BIF LEFT_PAREN phrase RIGHT_PAREN
+		{ $$ = create_monadic_node ($1, $3); }
 	| LEFT_PAREN phrase RIGHT_PAREN { $$ = $2; }
 	;
 

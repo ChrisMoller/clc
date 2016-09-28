@@ -76,19 +76,19 @@ tanh            { yylval.d = SYM_TANH;   return BIF; }
 asin            { yylval.d = SYM_ASIN;   return BIF; }
 acos            { yylval.d = SYM_ACOS;   return BIF; }
 atan            { yylval.d = SYM_ATAN;   return BIF; }
-logb            { yylval.d = SYM_LOG;    return BIF2R; }
+logb            { yylval.d = SYM_LOG;    return BIF; }
 sin             { yylval.d = SYM_SIN;    return BIF; }
 cos             { yylval.d = SYM_COS;    return BIF; }
 tan             { yylval.d = SYM_TAN;    return BIF; }
 log             { yylval.d = SYM_LOG;    return BIF; }
 ln              { yylval.d = SYM_LN;     return BIF; }
-\+              { yylval.d = SYM_PLUS;   return LEFT_DYADIC; }
-\-              { yylval.d = SYM_MINUS;  return LEFT_DYADIC; }
-\*              { yylval.d = SYM_STAR;   return LEFT_DYADIC; }
-\/              { yylval.d = SYM_SLASH;  return LEFT_DYADIC; }
-\^              { yylval.d = SYM_HAT;    return LEFT_DYADIC; }
+\+              { yylval.d = SYM_PLUS;   return RIGHT_DYADIC; }
+\-              { yylval.d = SYM_MINUS;  return RIGHT_DYADIC; }
+\*              { yylval.d = SYM_STAR;   return RIGHT_DYADIC; }
+\/              { yylval.d = SYM_SLASH;  return RIGHT_DYADIC; }
+\^              { yylval.d = SYM_HAT;    return RIGHT_DYADIC; }
+\,		{ yylval.d = SYM_COMMA;  return RIGHT_CLC_DYADIC; }
 
-\,		return COMMA;
 \(		return LEFT_PAREN;
 \)		return RIGHT_PAREN;
 
