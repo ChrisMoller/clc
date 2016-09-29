@@ -44,9 +44,9 @@ create_complex_vector_node ()
 {
   node_cpx_vector_s *node = malloc (sizeof(node_cpx_vector_s));
   node_cpx_vector_type (node) = TYPE_CPX_VECTOR;
-  node_cpx_vector_rows (node) = -1;
-  node_cpx_vector_cols (node) = -1;
-  node_cpx_vector_max (node)  = 0;
+  node_cpx_vector_rows (node) = 0;
+  node_cpx_vector_cols (node) = 0;
+  node_cpx_vector_max  (node) = 0;
   node_cpx_vector_next (node) = 0;
   node_cpx_vector_data (node) = NULL;
   return (node_u)node;
@@ -65,6 +65,7 @@ append_complex_vector_node (node_u vector, gsl_complex v)
 		 node_cpx_vector_max (node) * sizeof(gsl_complex));
     }
     node_cpx_vector_data (node)[node_cpx_vector_next (node)++] = v;
+    node_cpx_vector_cols (node)++;
     return (node_u)node;
   }
   return vector;
@@ -174,6 +175,8 @@ do_eval (node_u node)
 	      node_cpx_vector_s *vs = node_cpx_vector (rc);
 	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		node_cpx_vector_next (ls);
+	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
+	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
 	      node_cpx_vector_data (vs) =
 		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
@@ -192,12 +195,18 @@ do_eval (node_u node)
 	    if (op) {
 	      node_cpx_vector_s *rs = node_cpx_vector (ra);
 	      node_cpx_vector_s *ls = node_cpx_vector (la);
-	      if (node_cpx_vector_next (ls) ==
-		  node_cpx_vector_next (ls)) {
+	      if ((node_cpx_vector_next (ls) ==
+		   node_cpx_vector_next (rs)) &&
+		  (node_cpx_vector_rows (ls) ==
+		   node_cpx_vector_rows (rs)) &&
+		  (node_cpx_vector_cols (ls) ==
+		   node_cpx_vector_cols (rs))) {
 		rc = create_complex_vector_node ();
 		node_cpx_vector_s *vs = node_cpx_vector (rc);
 		node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		  node_cpx_vector_next (ls);
+		node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
+		node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
 		node_cpx_vector_data (vs) =
 		  malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 		for (int i = 0; i < node_cpx_vector_next (ls); i++) {
@@ -353,9 +362,15 @@ print_node (node_u node)
   case TYPE_CPX_VECTOR:
     {
       node_cpx_vector_s *vs = node_cpx_vector (node);
+      int cols = node_cpx_vector_cols (vs);
+      int i;
       fprintf (stdout, "[ ");
-      for (int i = 0; i < node_cpx_vector_next (vs); i++)
+      for (i = 0; i < node_cpx_vector_next (vs); i++) {
 	fprintf (stdout, "%R ", &node_cpx_vector_data (vs)[i]);
+	if (((i + 1) % cols == 0) &&
+	    ((i + 1) <  node_cpx_vector_next (vs)))
+	  fprintf (stdout, "\n  ");
+      }
       fprintf (stdout, "]\n");
     }
     break;
