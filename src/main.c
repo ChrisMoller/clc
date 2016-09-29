@@ -44,9 +44,23 @@ main (int ac, char *av[])
       {"showops", no_argument,       &show_ops, 1},
       {0, 0, 0, 0}
     };
-    while (-1 != (c = getopt_long (ac, av, "",
+    while (-1 != (c = getopt_long (ac, av, "h",
                                    long_options, &option_index))) {
       switch(c) {
+      case 'h':
+	printf ("\nformat:\n");
+	printf ("\n");
+	printf ("\t%s [options] expression expression ...\n", av[0]);
+	printf ("\nwhere options] are one or more of:\n");
+	printf ("\n");
+	printf ("\t-h		show this brief help\n");
+	printf ("\t--showops	show a list ofsupported operators, \
+then exit\n");
+	printf ("\n");
+	printf ("expressions are clc expressions, usually quoted, such as:\n");
+	printf ("\n");
+	printf ("\t\"[2 3]<>[1 2 3 4 5 6]\"\n");
+	printf ("\t\"sin(45d}\"\n");
 	break;
       }
     }

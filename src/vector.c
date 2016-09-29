@@ -65,6 +65,12 @@ init_mtx (node_cpx_vector_s *ls)
     calloc (node_cpx_vector_next (vs), sizeof(gsl_complex));
   return rc;
 }
+node_u
+clc_ravel (node_u arg)
+{
+  node_u rc = NULL_NODE;
+  return rc;
+}
 
 node_u
 clc_reshape (node_u ln, node_u rn)
@@ -154,7 +160,51 @@ node_u
 clc_shape (node_u arg)
 {
   node_u rc = NULL_NODE;
-  printf ("shape\n");
+  
+  node_u la = do_eval (arg);
+  switch(get_type (la)) {
+  case TYPE_COMPLEX:
+    {
+      gsl_complex cv = gsl_complex_rect (0.0, 0.0);
+      rc = create_complex_node (cv);
+    }
+    break;
+  case TYPE_CPX_VECTOR:
+    {
+      node_cpx_vector_s *ls = node_cpx_vector (la);
+      int rows = node_cpx_vector_rows (ls);
+      int cols = node_cpx_vector_cols (ls);
+      if (rows > 0) {
+	gsl_complex cv = gsl_complex_rect ((double)cols, 0.0);
+	gsl_complex rv = gsl_complex_rect ((double)rows, 0.0);
+	rc = create_complex_vector_node ();
+	node_cpx_vector_s *vs = node_cpx_vector (rc);
+	node_cpx_vector_next (vs) = node_cpx_vector_max (vs) = 2;
+	node_cpx_vector_rows (vs) = 0;
+	node_cpx_vector_cols (vs) = 2;
+	node_cpx_vector_data (vs) =
+	  calloc (node_cpx_vector_next (vs), sizeof(gsl_complex));
+	node_cpx_vector_data (vs)[0] = rv;
+	node_cpx_vector_data (vs)[1] = cv;
+      }
+      else {
+	gsl_complex cv = gsl_complex_rect ((double)cols, 0.0);
+	rc = create_complex_node (cv);
+      }
+    }
+    break;
+  case TYPE_LITERAL:
+    {
+      node_string_s *ls = node_string (la);
+      char *value = node_string_value (ls);
+      double len = (double)(value ? (int)strlen (value) : 0);
+      gsl_complex cv = gsl_complex_rect (len, 0.0);
+      rc = create_complex_node (cv);
+    }
+    break;
+  default:
+    break;
+  }
   return rc;
 }
 

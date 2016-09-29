@@ -29,14 +29,13 @@ void yyerror (char const *);
 %token <v> NUMBER
 %token <s> STRING
 %token <s> QSTRING
-%right  <d> RIGHT_DYADIC
-%right  <d> RIGHT_CLC_DYADIC
+%right <d> RIGHT_DYADIC
+%right <d> RIGHT_CLC_DYADIC
 %right <d> BIF
 %token     LEFT_PAREN
 %token     RIGHT_PAREN
 %token     LEFT_BRACKET
 %token     RIGHT_BRACKET
-%token     COMMA
 %type  <n> phrase
 %type  <n> vector
 %type  <i> eof

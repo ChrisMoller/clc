@@ -107,6 +107,7 @@ create_monadic_node (sym_e op, op_type_e op_type, node_u arg)
   node_monadic_s *node = malloc (sizeof(node_monadic_s));
   node_monadic_type (node) = TYPE_MONADIC;
   node_monadic_op (node)   = op;
+  node_monadic_op_type (node) = op_type;
   node_monadic_arg (node)  = arg;
   return (node_u)node;
 }
@@ -152,6 +153,8 @@ do_eval (node_u node)
 	      node_cpx_vector_s *vs = node_cpx_vector (rc);
 	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		node_cpx_vector_next (rs);
+	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (rs);
+	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (rs);
 	      node_cpx_vector_data (vs) =
 		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	      for (int i = 0; i < node_cpx_vector_next (rs); i++) {
@@ -290,6 +293,8 @@ do_eval (node_u node)
 	      node_cpx_vector_s *vs = node_cpx_vector (rc);
 	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		node_cpx_vector_next (ls);
+	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
+	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
 	      node_cpx_vector_data (vs) =
 		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
