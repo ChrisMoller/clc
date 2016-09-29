@@ -29,8 +29,8 @@ void yyerror (char const *);
 %token <v> NUMBER
 %token <s> STRING
 %token <s> QSTRING
-%left  <d> RIGHT_DYADIC
-%left  <d> RIGHT_CLC_DYADIC
+%right  <d> RIGHT_DYADIC
+%right  <d> RIGHT_CLC_DYADIC
 %right <d> BIF
 %token     LEFT_PAREN
 %token     RIGHT_PAREN
@@ -69,9 +69,12 @@ phrase:   STRING  { $$ = create_string_node (TYPE_STRING, $1); }
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3); }
 	| phrase RIGHT_CLC_DYADIC phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3); }
-	| RIGHT_DYADIC phrase { $$ = create_monadic_node ($1, $2); }
+	| RIGHT_DYADIC phrase
+		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2); }
+	| RIGHT_CLC_DYADIC phrase
+		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2); }
 	| BIF LEFT_PAREN phrase RIGHT_PAREN
-		{ $$ = create_monadic_node ($1, $3); }
+		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $3); }
 	| LEFT_PAREN phrase RIGHT_PAREN { $$ = $2; }
 	| LEFT_BRACKET vector RIGHT_BRACKET { $$ = $2; }
 	;

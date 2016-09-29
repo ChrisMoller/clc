@@ -82,6 +82,7 @@ cos             { yylval.d = SYM_COS;    return BIF; }
 tan             { yylval.d = SYM_TAN;    return BIF; }
 log             { yylval.d = SYM_LOG;    return BIF; }
 ln              { yylval.d = SYM_LN;     return BIF; }
+\<\>            { yylval.d = SYM_LTGT;   return RIGHT_CLC_DYADIC; }
 \+              { yylval.d = SYM_PLUS;   return RIGHT_DYADIC; }
 \-              { yylval.d = SYM_MINUS;  return RIGHT_DYADIC; }
 \*              { yylval.d = SYM_STAR;   return RIGHT_DYADIC; }

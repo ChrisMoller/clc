@@ -17,6 +17,7 @@
 typedef gsl_complex (*cpx_dyadic)(gsl_complex a, gsl_complex b);
 typedef gsl_complex (*cpx_monadic)(gsl_complex a);
 typedef node_u (*clc_dyadic)(node_u la, node_u ra);
+typedef node_u (*clc_monadic)(node_u arg);
 
 typedef struct {
   void *dyadic;		/*cpx_dyadic*/
@@ -100,7 +101,7 @@ create_dyadic_node (node_u la, sym_e op, op_type_e op_type, node_u ra)
 }
 
 node_u
-create_monadic_node (sym_e op, node_u arg)
+create_monadic_node (sym_e op, op_type_e op_type, node_u arg)
 {
   node_monadic_s *node = malloc (sizeof(node_monadic_s));
   node_monadic_type (node) = TYPE_MONADIC;
@@ -126,8 +127,8 @@ do_eval (node_u node)
   case TYPE_DYADIC:
     {
       node_dyadic_s *dyad = node_dyadic (node);
-      node_u la = do_eval (node_dyadic_la (dyad));
       node_u ra = do_eval (node_dyadic_ra (dyad));
+      node_u la = do_eval (node_dyadic_la (dyad));
       sym_e sym = node_dyadic_op (dyad);
       op_type_e op_type = node_dyadic_op_type (dyad);
 
@@ -185,17 +186,30 @@ do_eval (node_u node)
 	}
 	break;
       case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_CPX_VECTOR):
-	printf ("vec vec\n");
 	{
 	  if (sym >= 0 && sym < SYM_COUNT) {
 	    cpx_dyadic op = op_dyadic (sym);
 	    if (op) {
-	      node_complex_s *ls = node_complex (la);
-	      node_complex_s *rs = node_complex (ra);
-	      gsl_complex lv = node_complex_value (ls);
-	      gsl_complex rv = node_complex_value (rs);
-	      gsl_complex vv = (*op)(lv, rv);
-	      rc = create_complex_node (vv);
+	      node_cpx_vector_s *rs = node_cpx_vector (ra);
+	      node_cpx_vector_s *ls = node_cpx_vector (la);
+	      if (node_cpx_vector_next (ls) ==
+		  node_cpx_vector_next (ls)) {
+		rc = create_complex_vector_node ();
+		node_cpx_vector_s *vs = node_cpx_vector (rc);
+		node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+		  node_cpx_vector_next (ls);
+		node_cpx_vector_data (vs) =
+		  malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+		for (int i = 0; i < node_cpx_vector_next (ls); i++) {
+		  gsl_complex rv = node_cpx_vector_data (rs)[i];
+		  gsl_complex lv = node_cpx_vector_data (ls)[i];
+		  gsl_complex vv = (*op)(lv, rv);
+		  node_cpx_vector_data (vs)[i] = vv;
+		}
+	      }
+	      else {
+		// fixme dim mismatch
+	      }
 	    }
 	  }
 	}
@@ -248,8 +262,36 @@ do_eval (node_u node)
       node_monadic_s *monad = node_monadic (node);
       node_u arg = do_eval (node_monadic_arg (monad));
       sym_e sym = node_monadic_op (monad);
+      op_type_e op_type = node_monadic_op_type (monad);
+
+      if (op_type == OP_TYPE_CLC) {
+	clc_monadic op = op_monadic (sym);
+	if (op) rc = (*op)(arg);
+	return rc;
+      }
 
       switch(get_type (arg)) {
+      case TYPE_CPX_VECTOR:
+	{
+	  if (sym >= 0 && sym < SYM_COUNT) {
+	    cpx_monadic op = op_monadic (sym);
+	    if (op) {
+	      rc = create_complex_vector_node ();
+	      node_cpx_vector_s *ls = node_cpx_vector (arg);
+	      node_cpx_vector_s *vs = node_cpx_vector (rc);
+	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+		node_cpx_vector_next (ls);
+	      node_cpx_vector_data (vs) =
+		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+	      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
+		gsl_complex lv = node_cpx_vector_data (ls)[i];
+		gsl_complex vv = (*op)(lv);
+		node_cpx_vector_data (vs)[i] = vv;
+	      }
+	    }
+	  } 
+	}
+	break;
       case TYPE_COMPLEX:
 	{
 	  if (sym >= 0 && sym < SYM_COUNT) {

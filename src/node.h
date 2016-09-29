@@ -96,10 +96,12 @@ struct _node_dyadic_type {
 struct _node_monadic_type {
   type_e	type;
   sym_e		op;
+  op_type_e	op_type;
   node_u	arg;
 };
 #define node_monadic_type(n)	((n)->type)
 #define node_monadic_op(n)	((n)->op)
+#define node_monadic_op_type(n)	((n)->op_type)
 #define node_monadic_arg(n)	((n)->arg)
 
 struct _node_list_type {

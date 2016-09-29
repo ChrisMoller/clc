@@ -10,6 +10,8 @@
 	 2, 1, "power", "exp"),
   ENTRY (",", SYM_COMMA,	clc_catenate,		NULL,
 	 2, 0, "power", "exp"),
+  ENTRY ("<>", SYM_LTGT,	clc_reshape,		clc_shape,
+	 2, 1, "reshape", "shape"),
   ENTRY ("sin", SYM_SIN,	NULL,			gsl_complex_sin,
 	 0, 1, NULL, "sin"),
   ENTRY ("cos", SYM_COS,	NULL,			gsl_complex_cos,
