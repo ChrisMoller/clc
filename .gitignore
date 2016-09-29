@@ -20,6 +20,7 @@ src/.deps/
 src/clc
 src/lexer.c
 src/parse.c
+*~
 # Object files
 *.o
 *.ko
