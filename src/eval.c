@@ -138,6 +138,68 @@ do_eval (node_u node)
       }
 
       switch(TYPE_GEN (get_type (la), get_type (ra))) {
+      case TYPE_GEN (TYPE_COMPLEX, TYPE_CPX_VECTOR):
+	{
+	  if (sym >= 0 && sym < SYM_COUNT) {
+	    cpx_dyadic op = op_dyadic (sym);
+	    if (op) {
+	      node_complex_s *ls = node_complex (la);
+	      node_cpx_vector_s *rs = node_cpx_vector (ra);
+	      gsl_complex lv = node_complex_value (ls);
+	      rc = create_complex_vector_node ();
+	      node_cpx_vector_s *vs = node_cpx_vector (rc);
+	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+		node_cpx_vector_next (rs);
+	      node_cpx_vector_data (vs) =
+		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+	      for (int i = 0; i < node_cpx_vector_next (rs); i++) {
+		gsl_complex rv = node_cpx_vector_data (rs)[i];
+		gsl_complex vv = (*op)(lv, rv);
+		node_cpx_vector_data (vs)[i] = vv;
+	      }
+	    }
+	  }
+	}
+	break;
+      case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_COMPLEX):
+	{
+	  if (sym >= 0 && sym < SYM_COUNT) {
+	    cpx_dyadic op = op_dyadic (sym);
+	    if (op) {
+	      node_complex_s *rs = node_complex (ra);
+	      node_cpx_vector_s *ls = node_cpx_vector (la);
+	      gsl_complex rv = node_complex_value (rs);
+	      rc = create_complex_vector_node ();
+	      node_cpx_vector_s *vs = node_cpx_vector (rc);
+	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+		node_cpx_vector_next (ls);
+	      node_cpx_vector_data (vs) =
+		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+	      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
+		gsl_complex lv = node_cpx_vector_data (ls)[i];
+		gsl_complex vv = (*op)(lv, rv);
+		node_cpx_vector_data (vs)[i] = vv;
+	      }
+	    }
+	  }
+	}
+	break;
+      case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_CPX_VECTOR):
+	printf ("vec vec\n");
+	{
+	  if (sym >= 0 && sym < SYM_COUNT) {
+	    cpx_dyadic op = op_dyadic (sym);
+	    if (op) {
+	      node_complex_s *ls = node_complex (la);
+	      node_complex_s *rs = node_complex (ra);
+	      gsl_complex lv = node_complex_value (ls);
+	      gsl_complex rv = node_complex_value (rs);
+	      gsl_complex vv = (*op)(lv, rv);
+	      rc = create_complex_node (vv);
+	    }
+	  }
+	}
+	break;
       case TYPE_GEN (TYPE_COMPLEX, TYPE_COMPLEX):
 	{
 	  if (sym >= 0 && sym < SYM_COUNT) {
@@ -291,7 +353,13 @@ free_node (node_u node)
 {
   switch(get_type (node)) {
   case TYPE_CPX_VECTOR:
-    // fixme
+    {
+      node_cpx_vector_s *vs = node_cpx_vector (node);
+      if (vs) {
+	if (node_cpx_vector_data (vs)) free (node_cpx_vector_data (vs));
+	free (vs);
+      }
+    }
     break;
   case TYPE_LIST:
     {
