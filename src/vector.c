@@ -318,8 +318,8 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
   else if (get_type (la) == TYPE_CPX_VECTOR &&
 	   get_type (ra) == TYPE_CPX_VECTOR ) {	// both vectors
 	  
-#undef  dest_offset
 #define dest_offset(r,c)  (((r) * node_cpx_vector_cols (dest)) + c)
+#define src_offset(s,r,c)  (((r) * (s)) + c)
 
     int axis = 0;
     if (get_type (mo) == TYPE_COMPLEX) {
@@ -366,10 +366,6 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 	  node_cpx_vector_data (dest) =
 	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
 	  int r, c;
-	  
-	  //#define src_offset(r,c)  (((r) * node_cpx_vector_cols (rs)) + c)
-#define src_offset(s,r,c)  (((r) * (s)) + c)
-	  
 	  for (c = 0; c < lcols; c++)
 	    node_cpx_vector_data (dest)[dest_offset (c, 0)] =
 	      node_cpx_vector_data (ls)[c];
@@ -389,9 +385,6 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 	// c d  ,  x y z  =  c d y
 	// e f               e f z
 	if (lrows == rcols) {
-	}
-	else {
-	  // fixme -- dim mismatch
 	  rc = create_complex_vector_node ();
 	  node_cpx_vector_s *dest = node_cpx_vector (rc);
 	  node_cpx_vector_rows (dest) = lrows;
@@ -400,9 +393,51 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 	    node_cpx_vector_next (ls) + node_cpx_vector_next (rs);
 	  node_cpx_vector_data (dest) =
 	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	  int r, c;
+	  for (r = 0; r < lrows; r++) {
+	    for (c = 0; c < lcols; c++) {
+	      node_cpx_vector_data (dest)[dest_offset (r, c)] =
+		node_cpx_vector_data (ls)[src_offset (lcols, r, c)];
+	    }
+	  }
+	  for (c = 0; c < rcols; c++)
+	    node_cpx_vector_data (dest)[dest_offset (c, lcols)] =
+	      node_cpx_vector_data (rs)[c];
+	}
+	else {
+	  // fixme -- dim mismatch
 	}
       }
       else if (lrows != 0 && rrows != 0) {	// mtx mtx
+	// a b     u v     a b u v
+	// c d  ,  w x  =  c d w x
+	// e f     y z     e f y z
+	if (lrows == rrows) {
+	  rc = create_complex_vector_node ();
+	  node_cpx_vector_s *dest = node_cpx_vector (rc);
+	  node_cpx_vector_rows (dest) = lrows;
+	  node_cpx_vector_cols (dest) = lcols + rcols;
+	  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	    node_cpx_vector_next (ls) + node_cpx_vector_next (rs);
+	  node_cpx_vector_data (dest) =
+	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	  int r, c;
+	  for (r = 0; r < lrows; r++) {
+	    for (c = 0; c < lcols; c++) {
+	      node_cpx_vector_data (dest)[dest_offset (r, c)] =
+		node_cpx_vector_data (ls)[src_offset (lcols, r, c)];
+	    }
+	  }
+	  for (r = 0; r < rrows; r++) {
+	    for (c = 0; c < rcols; c++) {
+	      node_cpx_vector_data (dest)[dest_offset (r, c+lcols)] =
+		node_cpx_vector_data (rs)[src_offset (rcols, r, c)];
+	    }
+	  }
+	}
+	else {
+	  // fixme -- dim mismatch
+	}
       }
 #if 0
       if (lrows == rrows ||
@@ -476,6 +511,28 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 	}
       }
       else if (lrows != 0 && rrows == 0) {	// mtx vec
+	// a b c               a b c
+	// d e f  ,  x y z  =  d e f
+	//                     x y z
+	if (lcols == rcols) {
+	  rc = create_complex_vector_node ();
+	  node_cpx_vector_s *dest = node_cpx_vector (rc);
+	  node_cpx_vector_rows (dest) = lrows + 1;
+	  node_cpx_vector_cols (dest) = lcols;
+	  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	    node_cpx_vector_next (ls) + node_cpx_vector_next (rs);
+	  node_cpx_vector_data (dest) =
+	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	  memmove (node_cpx_vector_data (dest),
+		   node_cpx_vector_data (ls),
+		   node_cpx_vector_next (ls) * sizeof(gsl_complex));
+	  memmove (&node_cpx_vector_data (dest)[node_cpx_vector_next (ls)],
+		   node_cpx_vector_data (rs),
+		   node_cpx_vector_next (rs) * sizeof(gsl_complex));
+	}
+	else {
+	  // fixme -- dim mismatch
+	}
       }
       else if (lrows != 0 && rrows != 0) {	// mtx mtx
       }
