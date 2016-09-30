@@ -21,6 +21,8 @@
 	 2, 1, "catenate", "ravel"),
   ENTRY ("<>", SYM_LTGT,	clc_reshape,		clc_shape,
 	 2, 1, "reshape", "shape"),
+  ENTRY ("::", SYM_COLCOL,	clc_range,		clc_index,
+	 2, 1, "reshape", "shape"),
   ENTRY ("sin", SYM_SIN,	NULL,			gsl_complex_sin,
 	 0, 1, NULL, "sin"),
   ENTRY ("cos", SYM_COS,	NULL,			gsl_complex_cos,

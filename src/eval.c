@@ -40,10 +40,69 @@ ops_s op_table[] = {
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
 
-node_u
-clc_complex_real (node_u modifier, node_u arg)
+static node_u
+do_range (node_u modifier, node_u la, node_u ra)
 {
   node_u rc = NULL_NODE;
+  node_u rn = do_eval (ra);
+  
+  if (get_type (rn) == TYPE_COMPLEX) {
+    gsl_complex incr = gsl_complex_rect (1.0, 0.0);
+    gsl_complex init = gsl_complex_rect (0.0, 0.0);
+    
+    node_u mod = do_eval (modifier);
+    if (get_type (mod) == TYPE_COMPLEX) {
+      node_complex_s *mn = node_complex (mod);
+      incr = node_complex_value (mn);
+    }
+
+    node_u ln = do_eval (la);
+    if (get_type (ln) == TYPE_COMPLEX) {
+      node_complex_s *ls = node_complex (ln);
+      init = node_complex_value (ls);
+    }
+
+    node_complex_s *rs = node_complex (rn);
+    gsl_complex rv = node_complex_value (rs);
+    int ct = lrint (GSL_REAL (rv));
+    if (ct < 0) {
+      ct = -ct;
+      incr = gsl_complex_negative (incr);
+    }
+    if (ct > 0) {
+      rc = create_complex_vector_node ();
+      node_cpx_vector_s *dest = node_cpx_vector (rc);
+      node_cpx_vector_rows (dest) = 0;
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	node_cpx_vector_cols (dest) = ct;
+      node_cpx_vector_data (dest) =
+	malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+      for (int i =  0; i < ct; i++) {
+	node_cpx_vector_data (dest)[i] = init;
+	init = gsl_complex_add (init, incr);
+      }
+    }
+  }
+  return rc;
+}
+
+node_u
+clc_index (node_u modifier, node_u ra)
+{
+  return do_range (modifier, NULL_NODE, ra);
+}
+
+node_u
+clc_range (node_u modifier, node_u la, node_u ra)
+{
+  return do_range (modifier, la, ra);
+}
+
+node_u
+clc_complex_real (node_u modifier, node_u iarg)
+{
+  node_u rc = NULL_NODE;
+  node_u arg = do_eval (iarg);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *la = node_complex (arg);
     gsl_complex aa = node_complex_value (la);
@@ -55,9 +114,10 @@ clc_complex_real (node_u modifier, node_u arg)
 }
 
 node_u
-clc_complex_imag (node_u modifier, node_u arg)
+clc_complex_imag (node_u modifier, node_u iarg)
 {
   node_u rc = NULL_NODE;
+  node_u arg = do_eval (iarg);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *la = node_complex (arg);
     gsl_complex aa = node_complex_value (la);
@@ -69,9 +129,10 @@ clc_complex_imag (node_u modifier, node_u arg)
 }
 
 node_u
-clc_complex_abs (node_u modifier, node_u arg)
+clc_complex_abs (node_u modifier, node_u iarg)
 {
   node_u rc = NULL_NODE;
+  node_u arg = do_eval (iarg);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *la = node_complex (arg);
     gsl_complex aa = node_complex_value (la);
@@ -83,9 +144,10 @@ clc_complex_abs (node_u modifier, node_u arg)
 }
 
 node_u
-clc_complex_arg (node_u modifier, node_u arg)
+clc_complex_arg (node_u modifier, node_u iarg)
 {
   node_u rc = NULL_NODE;
+  node_u arg = do_eval (iarg);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *la = node_complex (arg);
     gsl_complex aa = node_complex_value (la);

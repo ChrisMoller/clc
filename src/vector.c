@@ -409,9 +409,9 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 	}
       }
       else if (lrows != 0 && rrows != 0) {	// mtx mtx
-	// a b     u v     a b u v
-	// c d  ,  w x  =  c d w x
-	// e f     y z     e f y z
+	// a b c     u v     a b c u v
+	// d e f  ,  w x  =  d e f w x
+	// g h i     y z     g h i y z
 	if (lrows == rrows) {
 	  rc = create_complex_vector_node ();
 	  node_cpx_vector_s *dest = node_cpx_vector (rc);
@@ -439,30 +439,6 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 	  // fixme -- dim mismatch
 	}
       }
-#if 0
-      if (lrows == rrows ||
-	  (rrows == 0 && lrows == rcols)) {
-	printf ("PING\n");
-	int rows = lrows;
-	int cols = lcols + rcols;
-	node_u lu = matrix_transpose (ln);
-	node_u ru = matrix_transpose (rn);
-	node_cpx_vector_s *ls = node_cpx_vector (lu);
-	node_cpx_vector_s *rs = node_cpx_vector (ru);
-	node_cpx_vector_rows (ls) = rows;
-	node_cpx_vector_cols (ls) = cols;
-	node_cpx_vector_next (ls) = node_cpx_vector_max (ls) = rows * cols;
-	node_cpx_vector_data (ls) =
-	  realloc (node_cpx_vector_data (ls),
-		   node_cpx_vector_next (ls) * sizeof(gsl_complex));
-	memmove (&node_cpx_vector_data (ls)[lcols * lrows],
-		 node_cpx_vector_data (rs),
-		 rcols * rrows * sizeof(gsl_complex));
-	rc = matrix_transpose (lu);
-	free_node (lu);
-	free_node (ru);
-      }
-#endif
     }
     else {					// axis == 1
       if (lrows == 0 && rrows == 0) {		// vec vec
@@ -535,6 +511,30 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 	}
       }
       else if (lrows != 0 && rrows != 0) {	// mtx mtx
+	// a b c     u v w     a b c
+	// d e f  ,  x y z  =  d e f
+	// g h i               g h i
+	//                     u v w
+	//                     x y z
+	if (lcols == rcols) {
+	  rc = create_complex_vector_node ();
+	  node_cpx_vector_s *dest = node_cpx_vector (rc);
+	  node_cpx_vector_rows (dest) = lrows + rrows;
+	  node_cpx_vector_cols (dest) = lcols;
+	  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	    node_cpx_vector_next (ls) + node_cpx_vector_next (rs);
+	  node_cpx_vector_data (dest) =
+	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	  memmove (node_cpx_vector_data (dest),
+		   node_cpx_vector_data (ls),
+		   node_cpx_vector_next (ls) * sizeof(gsl_complex));
+	  memmove (&node_cpx_vector_data (dest)[node_cpx_vector_next (ls)],
+		   node_cpx_vector_data (rs),
+		   node_cpx_vector_next (rs) * sizeof(gsl_complex));
+	}
+	else {
+	  // fixme -- dim mismatch
+	}
       }
     }
   }
