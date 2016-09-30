@@ -36,6 +36,26 @@ clc_matrix_mul (node_u modifier, node_u la, node_u ra)
     int lcols = node_cpx_vector_cols (ls);
     int rrows = node_cpx_vector_rows (rs);
     int rcols = node_cpx_vector_cols (rs);
+
+    if (lrows == 0 && rrows == 0) {
+    }
+    else if (lrows == 0 && rrows != 0) {
+      // ./clc '[1 2 3]><([3 2]<>[1011 1012 1021 1022 1031 1032])'
+      // a b c     r s     ar+bt+cw  as+bu+cx   
+      //       ><  t u  =  
+      //           w x
+      lrows = 1;
+    }
+    else if (lrows != 0 && rrows == 0) {
+      // ./clc '([3 2]<>[1011 1012 1021 1022 1031 1032])><[1 2]'
+      // a b c     r     ar+bs+ct
+      // d e f ><  s  =  dr+es+ft
+      // g h i     t     gr+hs+it
+      // j k l           jr+ks+lt
+      rrows = lcols;
+      rcols = 1;
+    }
+    
     if (lcols == rrows) {
       rc = create_complex_vector_node ();
       node_cpx_vector_s *dest = node_cpx_vector (rc);
