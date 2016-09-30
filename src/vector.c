@@ -33,8 +33,8 @@ matrix_transpose (node_u srcu)
   node_cpx_vector_data (dest) =
     malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
   
-#define src_offset(r,c)  ((r) * src_cols + c)
-#define dest_offset(r,c) ((r) * src_rows + c)
+#define xp_src_offset(r,c)  ((r) * src_cols + c)
+#define xp_dest_offset(r,c) ((r) * src_rows + c)
 
   for (int r = 0; r < src_rows; r++) {
     for (int c = 0; r < src_cols; c++) {
@@ -317,43 +317,16 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
   }
   else if (get_type (la) == TYPE_CPX_VECTOR &&
 	   get_type (ra) == TYPE_CPX_VECTOR ) {	// both vectors
+	  
+#undef  dest_offset
+#define dest_offset(r,c)  (((r) * node_cpx_vector_cols (dest)) + c)
+
     int axis = 0;
     if (get_type (mo) == TYPE_COMPLEX) {
       node_complex_s *mn = node_complex (mo);
       gsl_complex mv = node_complex_value(mn);
       axis = (int)lrint (GSL_REAL (mv));
     }
-    /**
-
-       axis = 0
-       
-       a b    x     a b x          rows = lrows ==! rrows 
-       c d  , y  =  c d y          cols = lcols + rcols
-       e f    z     e f z
-
-
-       a c e              a c e
-       b d f  , x y z  =  b d f
-                          x y z
-
-      a b x
-      c d y
-      e f z
-
-       axis != 0
-       
-       a b    w x   a b            rows = lrows + rrows
-       c d  , y z = c d            cols = lcols != rcols
-       e f          e f
-                    w x
-		    y z
-
-     possibilities:
-       lvec   rvec    lrows == 0 && rrows == 0
-       lvec   rmtx    lrows == 0 && rrows != 0
-       lmtx   rvec    lrows != 0 && rrows == 0
-       lmtx   rmtx    lrows != 0 && rrows != 0
-    **/
 
     node_cpx_vector_s *ls = node_cpx_vector (la);
     node_cpx_vector_s *rs = node_cpx_vector (ra);
@@ -361,10 +334,10 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
     int lcols = node_cpx_vector_cols (ls);
     int rrows = node_cpx_vector_rows (rs);
     int rcols = node_cpx_vector_cols (rs);
-    printf ("lr %d lc %d  rr %d  rc %d\n",
-	    lrows, lcols, rrows, rcols);
+    //    printf ("axis %d lr %d lc %d  rr %d  rc %d\n",
+    //	    axis, lrows, lcols, rrows, rcols);
 
-    if (axis == 0) {
+    if (axis == 0) {				// axis == 0
       if (lrows == 0 && rrows == 0) {		// vec vec
 	// a b c , x y z = a b c x y z
 	rc = create_complex_vector_node ();
@@ -380,8 +353,54 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 		 node_cpx_vector_data (rs), rcols * sizeof(gsl_complex));
       }
       else if (lrows == 0 && rrows != 0) {	// vec mtx
+	// a b c , u v   a u v
+	//         w x = b w x
+	//         y z   c y z
+	if (lcols == rrows) {
+	  rc = create_complex_vector_node ();
+	  node_cpx_vector_s *dest = node_cpx_vector (rc);
+	  node_cpx_vector_rows (dest) = rrows;
+	  node_cpx_vector_cols (dest) = rcols + 1;
+	  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	    node_cpx_vector_next (ls) + node_cpx_vector_next (rs);
+	  node_cpx_vector_data (dest) =
+	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	  int r, c;
+	  
+	  //#define src_offset(r,c)  (((r) * node_cpx_vector_cols (rs)) + c)
+#define src_offset(s,r,c)  (((r) * (s)) + c)
+	  
+	  for (c = 0; c < lcols; c++)
+	    node_cpx_vector_data (dest)[dest_offset (c, 0)] =
+	      node_cpx_vector_data (ls)[c];
+	  for (r = 0; r < rrows; r++) {
+	    for (c = 0; c < rcols; c++) {
+	      node_cpx_vector_data (dest)[dest_offset (r, c + 1)] =
+		node_cpx_vector_data (rs)[src_offset (rcols, r, c)];
+	    }
+	  }
+	}
+	else {
+	  // fixme -- dim mismatch
+	}
       }
       else if (lrows != 0 && rrows == 0) {	// mtx vec
+	// a b               a b x
+	// c d  ,  x y z  =  c d y
+	// e f               e f z
+	if (lrows == rcols) {
+	}
+	else {
+	  // fixme -- dim mismatch
+	  rc = create_complex_vector_node ();
+	  node_cpx_vector_s *dest = node_cpx_vector (rc);
+	  node_cpx_vector_rows (dest) = lrows;
+	  node_cpx_vector_cols (dest) = lcols + 1;
+	  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	    node_cpx_vector_next (ls) + node_cpx_vector_next (rs);
+	  node_cpx_vector_data (dest) =
+	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	}
       }
       else if (lrows != 0 && rrows != 0) {	// mtx mtx
       }
@@ -410,7 +429,56 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
       }
 #endif
     }
-    else {
+    else {					// axis == 1
+      if (lrows == 0 && rrows == 0) {		// vec vec
+	// a b c ,{1} x y z = a b c
+	//                    x y z
+	if (lcols == rcols) {
+	  rc = create_complex_vector_node ();
+	  node_cpx_vector_s *dest = node_cpx_vector (rc);
+	  node_cpx_vector_rows (dest) = 2;
+	  node_cpx_vector_cols (dest) = rcols;
+	  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	    lcols + rcols;
+	  node_cpx_vector_data (dest) =
+	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	  memmove (node_cpx_vector_data (dest),
+		   node_cpx_vector_data (ls), lcols * sizeof(gsl_complex));
+	  memmove (&node_cpx_vector_data (dest)[lcols],
+		   node_cpx_vector_data (rs), rcols * sizeof(gsl_complex));
+	}
+	else {
+	  // fixme -- dim mismatch
+	}
+      }
+      else if (lrows == 0 && rrows != 0) {	// vec mtx
+	// a b c ,{1} u v w   a b c
+	//            x y z = u v w
+	//                 x y z
+	if (lcols == rcols) {
+	  rc = create_complex_vector_node ();
+	  node_cpx_vector_s *dest = node_cpx_vector (rc);
+	  node_cpx_vector_rows (dest) = rrows + 1;
+	  node_cpx_vector_cols (dest) = rcols;
+	  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	    node_cpx_vector_next (ls) + node_cpx_vector_next (rs);
+	  node_cpx_vector_data (dest) =
+	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	  memmove (node_cpx_vector_data (dest),
+		   node_cpx_vector_data (ls),
+		   node_cpx_vector_next (ls) * sizeof(gsl_complex));
+	  memmove (&node_cpx_vector_data (dest)[lcols],
+		   node_cpx_vector_data (rs),
+		   node_cpx_vector_next (rs) * sizeof(gsl_complex));
+	}
+	else {
+	  // fixme -- dim mismatch
+	}
+      }
+      else if (lrows != 0 && rrows == 0) {	// mtx vec
+      }
+      else if (lrows != 0 && rrows != 0) {	// mtx mtx
+      }
     }
   }
   else if (get_type (la) == TYPE_CPX_VECTOR &&

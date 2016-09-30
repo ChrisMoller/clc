@@ -77,6 +77,8 @@ asin            { yylval.d = SYM_ASIN;   return BIF; }
 acos            { yylval.d = SYM_ACOS;   return BIF; }
 atan            { yylval.d = SYM_ATAN;   return BIF; }
 logb            { yylval.d = SYM_LOG;    return BIF; }
+real            { yylval.d = SYM_REAL;   return CLC_BIF; }
+imag            { yylval.d = SYM_IMAG;   return CLC_BIF; }
 sin             { yylval.d = SYM_SIN;    return BIF; }
 cos             { yylval.d = SYM_COS;    return BIF; }
 tan             { yylval.d = SYM_TAN;    return BIF; }
@@ -88,6 +90,8 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 \*              { yylval.d = SYM_STAR;   return RIGHT_DYADIC; }
 \/              { yylval.d = SYM_SLASH;  return RIGHT_DYADIC; }
 \^              { yylval.d = SYM_HAT;    return RIGHT_DYADIC; }
+\<              { yylval.d = SYM_LT;     return RIGHT_CLC_DYADIC; }
+\|              { yylval.d = SYM_BAR;    return RIGHT_CLC_DYADIC; }
 \,		{ yylval.d = SYM_COMMA;  return RIGHT_CLC_DYADIC; }
 
 \(		return LEFT_PAREN;

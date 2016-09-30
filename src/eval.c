@@ -12,6 +12,7 @@
 
 #include "printext.h"
 #include "node.h"
+#include "eval.h"
 #include "vector.h"
 
 typedef gsl_complex (*cpx_dyadic)(gsl_complex a, gsl_complex b);
@@ -37,7 +38,63 @@ ops_s op_table[] = {
 #define op_nr_monadic(s)	op_table[s].nr_monadic_args
 
 static node_type_s null_node = { TYPE_NULL };
+#define NULL_NODE (node_u)(&null_node)
 
+node_u
+clc_complex_real (node_u modifier, node_u arg)
+{
+  node_u rc = NULL_NODE;
+  if (get_type (arg) == TYPE_COMPLEX) {
+    node_complex_s *la = node_complex (arg);
+    gsl_complex aa = node_complex_value (la);
+    double vv = GSL_REAL (aa);
+    gsl_complex rr = gsl_complex_rect (vv, 0.0);
+    rc = create_complex_node (rr);
+  }
+  return rc;
+}
+
+node_u
+clc_complex_imag (node_u modifier, node_u arg)
+{
+  node_u rc = NULL_NODE;
+  if (get_type (arg) == TYPE_COMPLEX) {
+    node_complex_s *la = node_complex (arg);
+    gsl_complex aa = node_complex_value (la);
+    double vv = GSL_IMAG (aa);
+    gsl_complex rr = gsl_complex_rect (vv, 0.0);
+    rc = create_complex_node (rr);
+  }
+  return rc;
+}
+
+node_u
+clc_complex_abs (node_u modifier, node_u arg)
+{
+  node_u rc = NULL_NODE;
+  if (get_type (arg) == TYPE_COMPLEX) {
+    node_complex_s *la = node_complex (arg);
+    gsl_complex aa = node_complex_value (la);
+    double vv = gsl_complex_abs (aa);
+    gsl_complex rr = gsl_complex_rect (vv, 0.0);
+    rc = create_complex_node (rr);
+  }
+  return rc;
+}
+
+node_u
+clc_complex_arg (node_u modifier, node_u arg)
+{
+  node_u rc = NULL_NODE;
+  if (get_type (arg) == TYPE_COMPLEX) {
+    node_complex_s *la = node_complex (arg);
+    gsl_complex aa = node_complex_value (la);
+    double vv = gsl_complex_arg (aa);
+    gsl_complex rr = gsl_complex_rect (vv, 0.0);
+    rc = create_complex_node (rr);
+  }
+  return rc;
+}
 
 node_u
 create_complex_vector_node ()
@@ -120,7 +177,7 @@ create_monadic_node (sym_e op, op_type_e op_type,
 node_u
 do_eval (node_u node)
 {
-  node_u rc = (node_u)(&null_node);
+  node_u rc = NULL_NODE;
   switch(get_type (node)) {
   case TYPE_NULL:
     break;

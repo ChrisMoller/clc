@@ -35,6 +35,7 @@ void yyerror (char const *);
 %right <d> RIGHT_DYADIC
 %right <d> RIGHT_CLC_DYADIC
 %right <d> BIF
+%right <d> CLC_BIF
 %token     LEFT_PAREN
 %token     RIGHT_PAREN
 %token     LEFT_BRACKET
@@ -80,6 +81,8 @@ phrase:   STRING  { $$ = create_string_node (TYPE_STRING, $1); }
 		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2, $3); }
 	| BIF modifier LEFT_PAREN phrase RIGHT_PAREN
 		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2, $4); }
+	| CLC_BIF modifier LEFT_PAREN phrase RIGHT_PAREN
+		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2, $4); }
 	| LEFT_PAREN phrase RIGHT_PAREN { $$ = $2; }
 	| LEFT_BRACKET vector RIGHT_BRACKET { $$ = $2; }
 	;
