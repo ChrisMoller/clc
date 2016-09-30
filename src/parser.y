@@ -6,8 +6,9 @@
 #include <string.h>
 #include <gsl/gsl_complex.h>
 
-#include "printext.h"
 #include "node.h"
+#include "memory.h"
+#include "printext.h"
 #include "eval.h"
 
 #define YYDEBUG 1

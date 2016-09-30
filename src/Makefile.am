@@ -6,6 +6,7 @@ clc_SOURCES = main.c \
               printext.c printext.h \
               eval.c eval.h \
               vector.c vector.h \
+              memory.c memory.h \
               parser.y lexer.l
 
 DISTCLEANFILES = .deps/*.P

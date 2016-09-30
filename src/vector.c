@@ -12,6 +12,7 @@
 #include <gsl/gsl_blas.h>
 
 #include "node.h"
+#include "memory.h"
 #include "eval.h"
 #include "printext.h"
 
