@@ -17,35 +17,53 @@
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
 
-#if 0
-static node_u
-matrix_transpose (node_u srcu)
+node_u
+clc_transpose (node_u modifier, node_u arg)
 {
-  node_u destu = create_complex_vector_node ();
-  node_cpx_vector_s *dest = node_cpx_vector (destu);
-  node_cpx_vector_s *src  = node_cpx_vector (srcu);
-  int src_rows = node_cpx_vector_rows (src);
-  int src_cols = node_cpx_vector_cols (src);
-  node_cpx_vector_rows (dest) = src_cols;
-  node_cpx_vector_cols (dest) = src_rows;
-  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
-    node_cpx_vector_next (src);
-  node_cpx_vector_data (dest) =
-    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+  node_u rc = arg;
+
+  if (get_type (arg) == TYPE_CPX_VECTOR) {
+    node_cpx_vector_s *src  = node_cpx_vector (arg);
+    int src_rows = node_cpx_vector_rows (src);
+    if (src_rows == 0) {
+      rc = create_complex_vector_node ();
+      node_cpx_vector_s *dest = node_cpx_vector (rc);
+      int src_cols = node_cpx_vector_cols (src);
+      node_cpx_vector_rows (dest) = src_cols;
+      node_cpx_vector_cols (dest) = 1;
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	node_cpx_vector_next (src);
+      node_cpx_vector_data (dest) =
+	malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+      memmove (node_cpx_vector_data (dest), node_cpx_vector_data (src),
+	       node_cpx_vector_max (dest) * sizeof(gsl_complex));
+    }
+    else if (src_rows > 0) {
+      rc = create_complex_vector_node ();
+      node_cpx_vector_s *dest = node_cpx_vector (rc);
+      int src_cols = node_cpx_vector_cols (src);
+      node_cpx_vector_rows (dest) = src_cols;
+      node_cpx_vector_cols (dest) = src_rows;
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	node_cpx_vector_next (src);
+      node_cpx_vector_data (dest) =
+	malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
   
 #define xp_src_offset(r,c)  ((r) * src_cols + c)
-#define xp_dest_offset(r,c) ((r) * src_rows + c)
+#define xp_dst_offset(r,c) ((r) * src_rows + c)
 
-  for (int r = 0; r < src_rows; r++) {
-    for (int c = 0; r < src_cols; c++) {
-      int soff = src_offset (r, c);
-      int doff = dest_offset (c, r);
-      node_cpx_vector_data (dest)[doff] = node_cpx_vector_data (src)[soff];
+      for (int r = 0; r < src_rows; r++) {
+	for (int c = 0; c < src_cols; c++) {
+	  int soff = xp_src_offset (r, c);
+	  int doff = xp_dst_offset (c, r);
+	  node_cpx_vector_data (dest)[doff] = node_cpx_vector_data (src)[soff];
+	}
+      }
     }
   }
-  return destu;
+  return rc;
 }
-#endif
+
 
 static node_u
 build_vec (int rows, node_cpx_vector_s *rs)
@@ -334,8 +352,6 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
     int lcols = node_cpx_vector_cols (ls);
     int rrows = node_cpx_vector_rows (rs);
     int rcols = node_cpx_vector_cols (rs);
-    //    printf ("axis %d lr %d lc %d  rr %d  rc %d\n",
-    //	    axis, lrows, lcols, rrows, rcols);
 
     if (axis == 0) {				// axis == 0
       if (lrows == 0 && rrows == 0) {		// vec vec
