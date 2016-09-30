@@ -85,24 +85,28 @@ struct _node_dyadic_type {
   node_u	left_arg;
   sym_e		op;
   op_type_e	op_type;
+  node_u	modifier;
   node_u	right_arg;
 };
 #define node_dyadic_type(n)	((n)->type)
 #define node_dyadic_la(n)	((n)->left_arg)
 #define node_dyadic_op(n)	((n)->op)
 #define node_dyadic_op_type(n)	((n)->op_type)
+#define node_dyadic_modifier(n)	((n)->modifier)
 #define node_dyadic_ra(n)	((n)->right_arg)
 
 struct _node_monadic_type {
   type_e	type;
   sym_e		op;
   op_type_e	op_type;
+  node_u	modifier;
   node_u	arg;
 };
-#define node_monadic_type(n)	((n)->type)
-#define node_monadic_op(n)	((n)->op)
-#define node_monadic_op_type(n)	((n)->op_type)
-#define node_monadic_arg(n)	((n)->arg)
+#define node_monadic_type(n)		((n)->type)
+#define node_monadic_op(n)		((n)->op)
+#define node_monadic_op_type(n)		((n)->op_type)
+#define node_monadic_modifier(n)	((n)->modifier)
+#define node_monadic_arg(n)		((n)->arg)
 
 struct _node_list_type {
   type_e	 type;

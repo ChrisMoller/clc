@@ -17,6 +17,36 @@
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
 
+#if 0
+static node_u
+matrix_transpose (node_u srcu)
+{
+  node_u destu = create_complex_vector_node ();
+  node_cpx_vector_s *dest = node_cpx_vector (destu);
+  node_cpx_vector_s *src  = node_cpx_vector (srcu);
+  int src_rows = node_cpx_vector_rows (src);
+  int src_cols = node_cpx_vector_cols (src);
+  node_cpx_vector_rows (dest) = src_cols;
+  node_cpx_vector_cols (dest) = src_rows;
+  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+    node_cpx_vector_next (src);
+  node_cpx_vector_data (dest) =
+    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+  
+#define src_offset(r,c)  ((r) * src_cols + c)
+#define dest_offset(r,c) ((r) * src_rows + c)
+
+  for (int r = 0; r < src_rows; r++) {
+    for (int c = 0; r < src_cols; c++) {
+      int soff = src_offset (r, c);
+      int doff = dest_offset (c, r);
+      node_cpx_vector_data (dest)[doff] = node_cpx_vector_data (src)[soff];
+    }
+  }
+  return destu;
+}
+#endif
+
 static node_u
 build_vec (int rows, node_cpx_vector_s *rs)
 {
@@ -67,7 +97,7 @@ init_mtx (node_cpx_vector_s *ls)
 }
 
 node_u
-clc_reshape (node_u ln, node_u rn)
+clc_reshape (node_u modifier, node_u ln, node_u rn)
 {
   node_u rc = NULL_NODE;
   node_u ra = do_eval (rn);
@@ -151,7 +181,7 @@ clc_reshape (node_u ln, node_u rn)
 }
 
 node_u
-clc_ravel (node_u arg)
+clc_ravel (node_u modifier, node_u arg)
 {
   node_u rc = NULL_NODE;
   node_u la = do_eval (arg);
@@ -184,7 +214,7 @@ clc_ravel (node_u arg)
 }
 
 node_u
-clc_shape (node_u arg)
+clc_shape (node_u modifier, node_u arg)
 {
   node_u rc = NULL_NODE;
   
@@ -236,9 +266,13 @@ clc_shape (node_u arg)
 }
 
 node_u
-clc_catenate (node_u la, node_u ra)
+clc_catenate (node_u modifier, node_u ln, node_u rn)
 {
   node_u rc = NULL_NODE;
+  node_u ra = do_eval (rn);
+  node_u la = do_eval (ln);
+  node_u mo = do_eval (modifier);
+  
   if (get_type (la) == TYPE_LIST &&
       get_type (ra) == TYPE_LIST ) {	// both lists
     node_list_s *tolist   = node_list (la);
@@ -280,6 +314,112 @@ clc_catenate (node_u la, node_u ra)
     node_list_list (list)[0] = la;
     node_list_next (list)++;
     rc = ra;
+  }
+  else if (get_type (la) == TYPE_CPX_VECTOR &&
+	   get_type (ra) == TYPE_CPX_VECTOR ) {	// both vectors
+    int axis = 0;
+    if (get_type (mo) == TYPE_COMPLEX) {
+      node_complex_s *mn = node_complex (mo);
+      gsl_complex mv = node_complex_value(mn);
+      axis = (int)lrint (GSL_REAL (mv));
+    }
+    /**
+
+       axis = 0
+       
+       a b    x     a b x          rows = lrows ==! rrows 
+       c d  , y  =  c d y          cols = lcols + rcols
+       e f    z     e f z
+
+
+       a c e              a c e
+       b d f  , x y z  =  b d f
+                          x y z
+
+      a b x
+      c d y
+      e f z
+
+       axis != 0
+       
+       a b    w x   a b            rows = lrows + rrows
+       c d  , y z = c d            cols = lcols != rcols
+       e f          e f
+                    w x
+		    y z
+
+     possibilities:
+       lvec   rvec    lrows == 0 && rrows == 0
+       lvec   rmtx    lrows == 0 && rrows != 0
+       lmtx   rvec    lrows != 0 && rrows == 0
+       lmtx   rmtx    lrows != 0 && rrows != 0
+    **/
+
+    node_cpx_vector_s *ls = node_cpx_vector (la);
+    node_cpx_vector_s *rs = node_cpx_vector (ra);
+    int lrows = node_cpx_vector_rows (ls);
+    int lcols = node_cpx_vector_cols (ls);
+    int rrows = node_cpx_vector_rows (rs);
+    int rcols = node_cpx_vector_cols (rs);
+    printf ("lr %d lc %d  rr %d  rc %d\n",
+	    lrows, lcols, rrows, rcols);
+
+    if (axis == 0) {
+      if (lrows == 0 && rrows == 0) {		// vec vec
+	// a b c , x y z = a b c x y z
+	rc = create_complex_vector_node ();
+	node_cpx_vector_s *dest = node_cpx_vector (rc);
+	node_cpx_vector_rows (dest) = 0;
+	node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	  node_cpx_vector_cols (dest) = lcols + rcols;
+	node_cpx_vector_data (dest) =
+	  malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	memmove (node_cpx_vector_data (dest),
+		 node_cpx_vector_data (ls), lcols * sizeof(gsl_complex));
+	memmove (&node_cpx_vector_data (dest)[lcols],
+		 node_cpx_vector_data (rs), rcols * sizeof(gsl_complex));
+      }
+      else if (lrows == 0 && rrows != 0) {	// vec mtx
+      }
+      else if (lrows != 0 && rrows == 0) {	// mtx vec
+      }
+      else if (lrows != 0 && rrows != 0) {	// mtx mtx
+      }
+#if 0
+      if (lrows == rrows ||
+	  (rrows == 0 && lrows == rcols)) {
+	printf ("PING\n");
+	int rows = lrows;
+	int cols = lcols + rcols;
+	node_u lu = matrix_transpose (ln);
+	node_u ru = matrix_transpose (rn);
+	node_cpx_vector_s *ls = node_cpx_vector (lu);
+	node_cpx_vector_s *rs = node_cpx_vector (ru);
+	node_cpx_vector_rows (ls) = rows;
+	node_cpx_vector_cols (ls) = cols;
+	node_cpx_vector_next (ls) = node_cpx_vector_max (ls) = rows * cols;
+	node_cpx_vector_data (ls) =
+	  realloc (node_cpx_vector_data (ls),
+		   node_cpx_vector_next (ls) * sizeof(gsl_complex));
+	memmove (&node_cpx_vector_data (ls)[lcols * lrows],
+		 node_cpx_vector_data (rs),
+		 rcols * rrows * sizeof(gsl_complex));
+	rc = matrix_transpose (lu);
+	free_node (lu);
+	free_node (ru);
+      }
+#endif
+    }
+    else {
+    }
+  }
+  else if (get_type (la) == TYPE_CPX_VECTOR &&
+	   get_type (ra) == TYPE_COMPLEX ) {	//
+    // fixme
+  }
+  else if (get_type (la) == TYPE_COMPLEX &&
+	   get_type (ra) == TYPE_CPX_VECTOR ) {	//
+    // fixme
   }
   else {					// neither lists
     node_list_s *list = malloc (sizeof(node_list_s));

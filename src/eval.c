@@ -16,8 +16,8 @@
 
 typedef gsl_complex (*cpx_dyadic)(gsl_complex a, gsl_complex b);
 typedef gsl_complex (*cpx_monadic)(gsl_complex a);
-typedef node_u (*clc_dyadic)(node_u la, node_u ra);
-typedef node_u (*clc_monadic)(node_u arg);
+typedef node_u (*clc_dyadic)(node_u modifier, node_u la, node_u ra);
+typedef node_u (*clc_monadic)(node_u modifier, node_u arg);
 
 typedef struct {
   void *dyadic;		/*cpx_dyadic*/
@@ -65,6 +65,7 @@ append_complex_vector_node (node_u vector, gsl_complex v)
 		 node_cpx_vector_max (node) * sizeof(gsl_complex));
     }
     node_cpx_vector_data (node)[node_cpx_vector_next (node)++] = v;
+    node_cpx_vector_rows (node) = 0;
     node_cpx_vector_cols (node)++;
     return (node_u)node;
   }
@@ -90,24 +91,28 @@ create_complex_node (gsl_complex v)
 }
 
 node_u
-create_dyadic_node (node_u la, sym_e op, op_type_e op_type, node_u ra)
+create_dyadic_node (node_u la, sym_e op, op_type_e op_type,
+		    node_u modifier, node_u ra)
 {
   node_dyadic_s *node = malloc (sizeof(node_dyadic_s));
   node_dyadic_type (node) = TYPE_DYADIC;
   node_dyadic_la (node) = la;
   node_dyadic_op (node) = op;
   node_dyadic_op_type (node) = op_type;
+  node_dyadic_modifier (node) = modifier;
   node_dyadic_ra (node) = ra;
   return (node_u)node;
 }
 
 node_u
-create_monadic_node (sym_e op, op_type_e op_type, node_u arg)
+create_monadic_node (sym_e op, op_type_e op_type,
+		     node_u modifier, node_u arg)
 {
   node_monadic_s *node = malloc (sizeof(node_monadic_s));
   node_monadic_type (node) = TYPE_MONADIC;
   node_monadic_op (node)   = op;
   node_monadic_op_type (node) = op_type;
+  node_monadic_modifier (node) = modifier;
   node_monadic_arg (node)  = arg;
   return (node_u)node;
 }
@@ -132,11 +137,12 @@ do_eval (node_u node)
       node_u ra = do_eval (node_dyadic_ra (dyad));
       node_u la = do_eval (node_dyadic_la (dyad));
       sym_e sym = node_dyadic_op (dyad);
+      node_u modifier = node_dyadic_modifier (dyad);
       op_type_e op_type = node_dyadic_op_type (dyad);
 
       if (op_type == OP_TYPE_CLC) {
 	clc_dyadic op = op_dyadic (sym);
-	if (op) rc = (*op)(la, ra);
+	if (op) rc = (*op)(modifier, la, ra);
 	return rc;
       }
 
@@ -275,10 +281,11 @@ do_eval (node_u node)
       node_u arg = do_eval (node_monadic_arg (monad));
       sym_e sym = node_monadic_op (monad);
       op_type_e op_type = node_monadic_op_type (monad);
+      node_u modifier = node_monadic_modifier (monad);
 
       if (op_type == OP_TYPE_CLC) {
 	clc_monadic op = op_monadic (sym);
-	if (op) rc = (*op)(arg);
+	if (op) rc = (*op)(modifier, arg);
 	return rc;
       }
 

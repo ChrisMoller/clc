@@ -12,6 +12,9 @@
 
 #define YYDEBUG 1
 
+static node_type_s null_node = { TYPE_NULL };
+#define NULL_NODE (node_u)(&null_node)
+
 int yylex ();
 void yyerror (char const *);
 %}
@@ -36,7 +39,10 @@ void yyerror (char const *);
 %token     RIGHT_PAREN
 %token     LEFT_BRACKET
 %token     RIGHT_BRACKET
+%token     LEFT_BRACE
+%token     RIGHT_BRACE
 %type  <n> phrase
+%type  <n> modifier
 %type  <n> vector
 %type  <i> eof
 				
@@ -64,19 +70,23 @@ eof     : EOS { $$ = 1; }
 phrase:   STRING  { $$ = create_string_node (TYPE_STRING, $1); }
 	| QSTRING { $$ = create_string_node (TYPE_LITERAL, $1); }
 	| NUMBER  { $$ = create_complex_node ($1); }
-	| phrase RIGHT_DYADIC phrase
-		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3); }
-	| phrase RIGHT_CLC_DYADIC phrase
-		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3); }
-	| RIGHT_DYADIC phrase
-		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2); }
-	| RIGHT_CLC_DYADIC phrase
-		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2); }
-	| BIF LEFT_PAREN phrase RIGHT_PAREN
-		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $3); }
+	| phrase RIGHT_DYADIC modifier phrase
+		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3, $4); }
+	| phrase RIGHT_CLC_DYADIC modifier phrase
+		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
+	| RIGHT_DYADIC modifier phrase
+		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2, $3); }
+	| RIGHT_CLC_DYADIC modifier phrase
+		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2, $3); }
+	| BIF modifier LEFT_PAREN phrase RIGHT_PAREN
+		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2, $4); }
 	| LEFT_PAREN phrase RIGHT_PAREN { $$ = $2; }
 	| LEFT_BRACKET vector RIGHT_BRACKET { $$ = $2; }
 	;
+
+modifier : /* empty */ { $$ = NULL_NODE; }
+	 | LEFT_BRACE phrase RIGHT_BRACE { $$ = $2; }
+	 ;
 
 vector  : /* empty */
 		{ $$ = create_complex_vector_node (); }
