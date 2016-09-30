@@ -1,3 +1,11 @@
+/***
+    TODO:
+        sum     across vector or mtx
+        product across vector or mtx
+	mtx mpy
+***/
+
+
   ENTRY ("+", SYM_PLUS,		gsl_complex_add,	NULL,
 	 2, 0, "add or catenate", NULL),
   ENTRY ("-", SYM_MINUS,	gsl_complex_sub,	gsl_complex_negative,
@@ -21,7 +29,7 @@
 	 2, 1, "catenate", "ravel"),
   ENTRY ("<>", SYM_LTGT,	clc_reshape,		clc_shape,
 	 2, 1, "reshape", "shape"),
-  ENTRY ("><", SYM_GTLT,	NULL,			clc_transpose,
+  ENTRY ("><", SYM_GTLT,	clc_matrix_mul,		clc_transpose,
 	 2, 1, NULL,      "transpose"),
   ENTRY ("::", SYM_COLCOL,	clc_range,		clc_index,
 	 2, 1, "reshape", "shape"),

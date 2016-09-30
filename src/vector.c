@@ -9,6 +9,7 @@
 
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <gsl/gsl_blas.h>
 
 #include "node.h"
 #include "eval.h"
@@ -16,6 +17,52 @@
 
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
+
+
+node_u
+clc_matrix_mul (node_u modifier, node_u la, node_u ra)
+{
+  node_u rc = NULL_NODE;
+  if (get_type (la) == TYPE_CPX_VECTOR &&
+      get_type (ra) == TYPE_CPX_VECTOR) {
+    // ./clc '([2 3]<>[.11 .12 .13 .21 .22 .23])><([3 2]<>[1011 1012 1021 1022 1031 1032])'
+    // a b c     r s     ar+bt+cw   as+bu+cx   
+    // d e f ><  t u  =  dr+et+fw	  ds+eu+fx
+    // g h i     w x     gr+ht+iw	  gs+hu+ix
+    // j k l             jr+kt+lw	  js+ku+lx
+    node_cpx_vector_s *ls = node_cpx_vector (la);
+    node_cpx_vector_s *rs = node_cpx_vector (ra);
+    int lrows = node_cpx_vector_rows (ls);
+    int lcols = node_cpx_vector_cols (ls);
+    int rrows = node_cpx_vector_rows (rs);
+    int rcols = node_cpx_vector_cols (rs);
+    if (lcols == rrows) {
+      rc = create_complex_vector_node ();
+      node_cpx_vector_s *dest = node_cpx_vector (rc);
+      int drows = node_cpx_vector_rows (dest) = lrows;
+      int dcols = node_cpx_vector_cols (dest) = rcols;
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	lrows * rcols;
+      node_cpx_vector_data (dest) =
+	calloc (node_cpx_vector_max (dest), sizeof(gsl_complex));
+      double *a = (double *)node_cpx_vector_data (ls);
+      double *b = (double *)node_cpx_vector_data (rs);
+      double *c = (double *)node_cpx_vector_data (dest);
+      gsl_matrix_complex_view A =
+	gsl_matrix_complex_view_array(a, lrows, lcols);
+      gsl_matrix_complex_view B =
+	gsl_matrix_complex_view_array(b, rrows, rcols);
+      gsl_matrix_complex_view C =
+	gsl_matrix_complex_view_array(c, drows, dcols);
+      gsl_complex alpha = {{1.0, 0.0}};
+      gsl_complex beta  = {{0.0, 0.0}};
+      gsl_blas_zgemm (CblasNoTrans, CblasNoTrans,
+		      alpha, &A.matrix, &B.matrix,
+		      beta, &C.matrix);
+    }
+  }
+  return rc;
+}
 
 node_u
 clc_transpose (node_u modifier, node_u arg)
