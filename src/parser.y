@@ -59,6 +59,9 @@ stmt	:	/* null */
 	| stmt phrase eof {
             node_u res = do_eval ($2);
             print_node (res);
+/*
+            walk_nodes ();       #ifdef DO_TREE
+*/
             free_node (res);
             free_node ($2);
             if ($3) YYABORT;

@@ -34,6 +34,8 @@ typedef union _node_u {
   node_monadic_s	*m;
   node_list_s		*l;
   node_cpx_vector_s	*v;
+  void	                *vp;
+  const void	        *vcp;
 } node_u;
 #define node_type(n)		((n).t)
 #define node_complex(n)		((n).c)
@@ -42,6 +44,7 @@ typedef union _node_u {
 #define node_monadic(n)		((n).m)
 #define node_list(n)		((n).l)
 #define node_cpx_vector(n)	((n).v)
+#define node_void(n)		((n).vp)
 
 typedef enum {
   TYPE_NULL,
@@ -58,22 +61,29 @@ typedef enum {
 
 struct _node_type_type {
   type_e	type;
+  int		refcnt;
 };
 #define node_type_type(n)	((n)->type)
+#define node_type_refcnt(n)	((n)->refcnt)
 #define get_type(n) (node_type_type (node_type (n)))
+#define node_refcnt(n) (node_type_refcnt (node_type ((node_u)n)))
 
 struct _node_complex_type {
   type_e	type;
+  int		refcnt;
   gsl_complex	value;
 };
 #define node_complex_type(n)	((n)->type)
+#define node_complex_refcnt(n)	((n)->refcnt)
 #define node_complex_value(n)	((n)->value)
 
 struct _node_string_type {
   type_e	type;
+  int		refcnt;
   char 		*value;
 };
 #define node_string_type(n)	((n)->type)
+#define node_string_refcnt(n)	((n)->refcnt)
 #define node_string_value(n)	((n)->value)
 
 typedef enum {
@@ -82,6 +92,7 @@ typedef enum {
 } op_type_e;
 struct _node_dyadic_type {
   type_e	type;
+  int		refcnt;
   node_u	left_arg;
   sym_e		op;
   op_type_e	op_type;
@@ -89,6 +100,7 @@ struct _node_dyadic_type {
   node_u	right_arg;
 };
 #define node_dyadic_type(n)	((n)->type)
+#define node_dyadic_refcnt(n)	((n)->refcnt)
 #define node_dyadic_la(n)	((n)->left_arg)
 #define node_dyadic_op(n)	((n)->op)
 #define node_dyadic_op_type(n)	((n)->op_type)
@@ -97,12 +109,14 @@ struct _node_dyadic_type {
 
 struct _node_monadic_type {
   type_e	type;
+  int		refcnt;
   sym_e		op;
   op_type_e	op_type;
   node_u	modifier;
   node_u	arg;
 };
 #define node_monadic_type(n)		((n)->type)
+#define node_monadic_refcnt(n)	((n)->refcnt)
 #define node_monadic_op(n)		((n)->op)
 #define node_monadic_op_type(n)		((n)->op_type)
 #define node_monadic_modifier(n)	((n)->modifier)
@@ -110,11 +124,13 @@ struct _node_monadic_type {
 
 struct _node_list_type {
   type_e	 type;
+  int		 refcnt;
   node_u	*list;
   int		 max;
   int		 next;
 };
 #define node_list_type(n)	((n)->type)
+#define node_list_refcnt(n)	((n)->refcnt)
 #define node_list_list(n)	((n)->list)
 #define node_list_max(n)	((n)->max)
 #define node_list_next(n)	((n)->next)
@@ -122,6 +138,7 @@ struct _node_list_type {
 
 struct _node_cpx_vector_type {
   type_e	 type;
+  int		 refcnt;
   int		 rows;
   int		 cols;
   int		 max;
@@ -129,6 +146,7 @@ struct _node_cpx_vector_type {
   gsl_complex	*data;
 };
 #define node_cpx_vector_type(n)	((n)->type)
+#define node_cpx_vector_refcnt(n)	((n)->refcnt)
 #define node_cpx_vector_rows(n)	((n)->rows)
 #define node_cpx_vector_cols(n)	((n)->cols)
 #define node_cpx_vector_max(n)	((n)->max)

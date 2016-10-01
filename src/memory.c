@@ -2,29 +2,95 @@
 #include "../config.h"
 #endif
 #define _GNU_SOURCE
+#ifdef DO_TREE
+#include <search.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "node.h"
+#include "printext.h"
+#include "memory.h"
+
+#ifdef DO_TREE
+void *node_root = NULL;
+
+static int
+node_compare (const void *a, const void *b)
+{
+  return (a == b) ? 0 : ((a < b) ? -1 : 1);
+}
+
+static void
+action (const void *nodep, const VISIT which, const int depth)
+{
+  //  int *datap;
+  node_u vp;
+
+  switch (which) {
+  case preorder:
+    break;
+  case postorder:
+    vp = *(node_u *)nodep;
+    //    datap = *(int **) nodep;
+    printf("%p %d %d post\n", node_void (vp), node_refcnt (vp), get_type (vp));
+    break;
+  case endorder:
+    break;
+  case leaf:
+    vp = *(node_u *)nodep;
+    //    datap = *(int **) nodep;
+    printf("%p %d %d leaf\n", node_void (vp), node_refcnt (vp), get_type (vp));
+    break;
+  }
+}
+  
+static void
+insert_node (node_u node)
+{
+  tsearch(node_void (node), &node_root, node_compare);
+}
+
+void
+walk_nodes ()
+{
+  twalk(node_root, action);
+}
+#endif
+
+void
+node_incref (node_u node)
+{
+  node_refcnt (node)++; 
+}
+
+void
+node_decref (node_u node)
+{
+  if (--node_refcnt (node) <= 0) free_node (node);
+}
 
 node_u
 create_complex_vector_node ()
 {
   node_cpx_vector_s *node = malloc (sizeof(node_cpx_vector_s));
+  node_refcnt (node) = 0;
   node_cpx_vector_type (node) = TYPE_CPX_VECTOR;
   node_cpx_vector_rows (node) = 0;
   node_cpx_vector_cols (node) = 0;
   node_cpx_vector_max  (node) = 0;
   node_cpx_vector_next (node) = 0;
   node_cpx_vector_data (node) = NULL;
+#ifdef DO_TREE
+  insert_node ((node_u)node);
+#endif
   return (node_u)node;
 }
 
 node_u
 append_complex_vector_node (node_u vector, gsl_complex v)
 {
-  // printf ("type = %d\n", get_type (vector));
   if (get_type (vector) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *node = node_cpx_vector (vector);
     if (node_cpx_vector_max (node) <= node_cpx_vector_next (node)) {
@@ -45,8 +111,12 @@ node_u
 create_string_node (type_e type, const char *s)
 {
   node_string_s *node = malloc (sizeof(node_string_s));
+  node_refcnt (node) = 0;
   node_string_type (node) = type;
   node_string_value (node) = s ? strdup (s) : NULL;
+#ifdef DO_TREE
+  insert_node ((node_u)node);
+#endif
   return (node_u)node;
 }
 
@@ -54,8 +124,12 @@ node_u
 create_complex_node (gsl_complex v)
 {
   node_complex_s *node = malloc (sizeof(node_complex_s));
+  node_refcnt (node) = 0;
   node_complex_type (node) = TYPE_COMPLEX;
   node_complex_value (node) = v;
+#ifdef DO_TREE
+  insert_node ((node_u)node);
+#endif
   return (node_u)node;
 }
 
@@ -64,12 +138,16 @@ create_dyadic_node (node_u la, sym_e op, op_type_e op_type,
 		    node_u modifier, node_u ra)
 {
   node_dyadic_s *node = malloc (sizeof(node_dyadic_s));
+  node_refcnt (node) = 0;
   node_dyadic_type (node) = TYPE_DYADIC;
   node_dyadic_la (node) = la;
   node_dyadic_op (node) = op;
   node_dyadic_op_type (node) = op_type;
   node_dyadic_modifier (node) = modifier;
   node_dyadic_ra (node) = ra;
+#ifdef DO_TREE
+  insert_node ((node_u)node);
+#endif
   return (node_u)node;
 }
 
@@ -78,23 +156,29 @@ create_monadic_node (sym_e op, op_type_e op_type,
 		     node_u modifier, node_u arg)
 {
   node_monadic_s *node = malloc (sizeof(node_monadic_s));
+  node_refcnt (node) = 0;
   node_monadic_type (node) = TYPE_MONADIC;
   node_monadic_op (node)   = op;
   node_monadic_op_type (node) = op_type;
   node_monadic_modifier (node) = modifier;
   node_monadic_arg (node)  = arg;
+#ifdef DO_TREE
+  insert_node ((node_u)node);
+#endif
   return (node_u)node;
 }
 
 void
 free_node (node_u node)
 {
+  if (node_refcnt (node) > 0) return;
   switch(get_type (node)) {
   case TYPE_CPX_VECTOR:
     {
       node_cpx_vector_s *vs = node_cpx_vector (node);
       if (vs) {
 	if (node_cpx_vector_data (vs)) free (node_cpx_vector_data (vs));
+	printf ("freeing cpx %p\n", node_void (node));
 	free (vs);
       }
     }

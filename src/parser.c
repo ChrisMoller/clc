@@ -496,9 +496,9 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    57,    57,    58,    59,    68,    69,    72,    73,    74,
-      75,    77,    79,    81,    83,    85,    87,    88,    91,    92,
-      96,    97
+       0,    57,    57,    58,    59,    71,    72,    75,    76,    77,
+      78,    80,    82,    84,    86,    88,    90,    91,    94,    95,
+      99,   100
 };
 #endif
 
@@ -1429,6 +1429,9 @@ yyreduce:
     {
             node_u res = do_eval ((yyvsp[(2) - (3)].n));
             print_node (res);
+/*
+            walk_nodes ();       #ifdef DO_TREE
+*/
             free_node (res);
             free_node ((yyvsp[(2) - (3)].n));
             if ((yyvsp[(3) - (3)].i)) YYABORT;
@@ -1437,109 +1440,109 @@ yyreduce:
 
   case 5:
 /* Line 1792 of yacc.c  */
-#line 68 "parser.y"
+#line 71 "parser.y"
     { (yyval.i) = 1; }
     break;
 
   case 6:
 /* Line 1792 of yacc.c  */
-#line 69 "parser.y"
+#line 72 "parser.y"
     { (yyval.i) = 0; }
     break;
 
   case 7:
 /* Line 1792 of yacc.c  */
-#line 72 "parser.y"
+#line 75 "parser.y"
     { (yyval.n) = create_string_node (TYPE_STRING, (yyvsp[(1) - (1)].s)); }
     break;
 
   case 8:
 /* Line 1792 of yacc.c  */
-#line 73 "parser.y"
+#line 76 "parser.y"
     { (yyval.n) = create_string_node (TYPE_LITERAL, (yyvsp[(1) - (1)].s)); }
     break;
 
   case 9:
 /* Line 1792 of yacc.c  */
-#line 74 "parser.y"
+#line 77 "parser.y"
     { (yyval.n) = create_complex_node ((yyvsp[(1) - (1)].v)); }
     break;
 
   case 10:
 /* Line 1792 of yacc.c  */
-#line 76 "parser.y"
+#line 79 "parser.y"
     { (yyval.n) = create_dyadic_node ((yyvsp[(1) - (4)].n), (yyvsp[(2) - (4)].d), OP_TYPE_GSL, (yyvsp[(3) - (4)].n), (yyvsp[(4) - (4)].n)); }
     break;
 
   case 11:
 /* Line 1792 of yacc.c  */
-#line 78 "parser.y"
+#line 81 "parser.y"
     { (yyval.n) = create_dyadic_node ((yyvsp[(1) - (4)].n), (yyvsp[(2) - (4)].d), OP_TYPE_CLC, (yyvsp[(3) - (4)].n), (yyvsp[(4) - (4)].n)); }
     break;
 
   case 12:
 /* Line 1792 of yacc.c  */
-#line 80 "parser.y"
+#line 83 "parser.y"
     { (yyval.n) = create_monadic_node ((yyvsp[(1) - (3)].d), OP_TYPE_GSL, (yyvsp[(2) - (3)].n), (yyvsp[(3) - (3)].n)); }
     break;
 
   case 13:
 /* Line 1792 of yacc.c  */
-#line 82 "parser.y"
+#line 85 "parser.y"
     { (yyval.n) = create_monadic_node ((yyvsp[(1) - (3)].d), OP_TYPE_CLC, (yyvsp[(2) - (3)].n), (yyvsp[(3) - (3)].n)); }
     break;
 
   case 14:
 /* Line 1792 of yacc.c  */
-#line 84 "parser.y"
+#line 87 "parser.y"
     { (yyval.n) = create_monadic_node ((yyvsp[(1) - (5)].d), OP_TYPE_GSL, (yyvsp[(2) - (5)].n), (yyvsp[(4) - (5)].n)); }
     break;
 
   case 15:
 /* Line 1792 of yacc.c  */
-#line 86 "parser.y"
+#line 89 "parser.y"
     { (yyval.n) = create_monadic_node ((yyvsp[(1) - (5)].d), OP_TYPE_CLC, (yyvsp[(2) - (5)].n), (yyvsp[(4) - (5)].n)); }
     break;
 
   case 16:
 /* Line 1792 of yacc.c  */
-#line 87 "parser.y"
+#line 90 "parser.y"
     { (yyval.n) = (yyvsp[(2) - (3)].n); }
     break;
 
   case 17:
 /* Line 1792 of yacc.c  */
-#line 88 "parser.y"
+#line 91 "parser.y"
     { (yyval.n) = (yyvsp[(2) - (3)].n); }
     break;
 
   case 18:
 /* Line 1792 of yacc.c  */
-#line 91 "parser.y"
+#line 94 "parser.y"
     { (yyval.n) = NULL_NODE; }
     break;
 
   case 19:
 /* Line 1792 of yacc.c  */
-#line 92 "parser.y"
+#line 95 "parser.y"
     { (yyval.n) = (yyvsp[(2) - (3)].n); }
     break;
 
   case 20:
 /* Line 1792 of yacc.c  */
-#line 96 "parser.y"
+#line 99 "parser.y"
     { (yyval.n) = create_complex_vector_node (); }
     break;
 
   case 21:
 /* Line 1792 of yacc.c  */
-#line 98 "parser.y"
+#line 101 "parser.y"
     { (yyval.n) = append_complex_vector_node ((yyvsp[(1) - (2)].n), (yyvsp[(2) - (2)].v)); }
     break;
 
 
 /* Line 1792 of yacc.c  */
-#line 1543 "parser.c"
+#line 1546 "parser.c"
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1771,7 +1774,7 @@ yyreturn:
 
 
 /* Line 2055 of yacc.c  */
-#line 101 "parser.y"
+#line 104 "parser.y"
 
 
 
