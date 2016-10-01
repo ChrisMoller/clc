@@ -95,6 +95,7 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 \<              { yylval.d = SYM_LT;     return RIGHT_CLC_DYADIC; }
 \|              { yylval.d = SYM_BAR;    return RIGHT_CLC_DYADIC; }
 \,		{ yylval.d = SYM_COMMA;  return RIGHT_CLC_DYADIC; }
+\=		{ yylval.d = SYM_EQUAL;  return RIGHT_CLC_DYADIC; }
 
 \(		return LEFT_PAREN;
 \)		return RIGHT_PAREN;

@@ -2,7 +2,7 @@
     TODO:
         sum     across vector or mtx
         product across vector or mtx
-	mtx mpy
+	comparisons/conditionals
 ***/
 
 
@@ -27,6 +27,8 @@
 
   ENTRY (",", SYM_COMMA,	clc_catenate,		clc_ravel,
 	 2, 1, "catenate", "ravel"),
+  ENTRY ("=", SYM_EQUAL,	clc_assign,		NULL,
+	 2, 1, "assign", NULL),
   ENTRY ("<>", SYM_LTGT,	clc_reshape,		clc_shape,
 	 2, 1, "reshape", "shape"),
   ENTRY ("><", SYM_GTLT,	clc_matrix_mul,		clc_transpose,

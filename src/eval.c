@@ -3,6 +3,7 @@
 #endif
 #define _GNU_SOURCE
 #include <math.h>
+#include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +41,8 @@ ops_s op_table[] = {
 
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
+
+void *global_root = NULL;
 
 static node_u
 do_range (node_u modifier, node_u la, node_u ra)
@@ -97,6 +100,89 @@ node_u
 clc_range (node_u modifier, node_u la, node_u ra)
 {
   return do_range (modifier, la, ra);
+}
+
+typedef struct {
+  char *lbl;
+  node_u      node;
+} symbol_entry_s;
+#define sym_lbl(e)  ((e)->lbl)
+#define sym_node(e) ((e)->node)
+
+static int
+var_compare (const void *a, const void *b)
+{
+  const symbol_entry_s *sa = a;
+  const symbol_entry_s *sb = b;
+  return strcmp (sym_lbl (sa), sym_lbl (sb));
+}
+
+#if 0
+static void
+var_action (const void *nodep, const VISIT which, const int depth)
+{
+  //  int *datap;
+  symbol_entry_s *vp;
+
+  switch (which) {
+  case preorder:
+    break;
+  case postorder:
+    vp = *(symbol_entry_s **)nodep;
+    printf("post \"%s\"\n", sym_lbl (vp));
+    break;
+  case endorder:
+    break;
+  case leaf:
+    vp = *(symbol_entry_s **)nodep;
+    printf("leaf \"%s\"\n", sym_lbl (vp));
+    break;
+  }
+}
+#endif
+
+node_u
+clc_assign (node_u modifier, node_u la, node_u ra)
+{
+  node_u rc = do_eval (ra);
+  node_u ls = do_eval (la);
+  
+  switch(get_type (ls)) {
+  case TYPE_NULL:
+    break;
+  case TYPE_STRING:	// unquoted string
+    {
+      node_string_s *lv = node_string (ls);
+      symbol_entry_s *sa = malloc (sizeof(symbol_entry_s));
+      sym_lbl (sa) = strdup (node_string_value (lv));
+      sym_node (sa) = rc;
+      node_incref (rc);
+      void *found = tfind (sa, &global_root, var_compare);
+      if (found) {
+	 symbol_entry_s *vp = *(symbol_entry_s **)found;
+	 if (sym_lbl (vp)) free (sym_lbl (vp));
+	 node_decref (sym_node (vp));
+	 free (vp);
+      }
+      tsearch (sa, &global_root, var_compare);
+      rc = NULL_NODE;	// fixme this migh not be the right thing to do
+#if 0
+      printf ("\nvars\n");
+      twalk(global_root, var_action);
+      printf ("end of vars\n\n");
+#endif
+    }
+    break;
+  case TYPE_LITERAL:	// quoted string
+  case TYPE_COMPLEX:
+  case TYPE_LIST:
+  case TYPE_CPX_VECTOR:
+  case TYPE_DYADIC:
+  case TYPE_MONADIC:
+    // err unassignable
+    break;
+  }
+  return rc;
 }
 
 node_u
@@ -166,9 +252,21 @@ do_eval (node_u node)
   switch(get_type (node)) {
   case TYPE_NULL:
     break;
+  case TYPE_STRING:
+    {
+      symbol_entry_s sa;
+      node_string_s *lv = node_string (node);
+      sym_lbl (&sa) = node_string_value (lv);
+      void *found = tfind (&sa, &global_root, var_compare);
+      if (found) {
+	symbol_entry_s *vp = *(symbol_entry_s **)found;
+	rc = sym_node (vp);
+      }
+      else rc = node;
+    }
+    break;
   case TYPE_COMPLEX:
   case TYPE_LITERAL:
-  case TYPE_STRING:
   case TYPE_LIST:
   case TYPE_CPX_VECTOR:
     rc = node;
