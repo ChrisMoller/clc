@@ -37,6 +37,8 @@
 	 2, 1, "reshape", "shape"),
   ENTRY ("><", SYM_GTLT,	clc_matrix_mul,		clc_transpose,
 	 2, 1, NULL,      "transpose"),
+  ENTRY ("<>", SYM_PLOT,	NULL,			clc_plot,
+	 2, 1, NULL, "plot"),
   ENTRY ("sqrt", SYM_SQRT,	NULL,			gsl_complex_sqrt,
 	 0, 1, NULL, "sin"),
   ENTRY ("::", SYM_COLCOL,	clc_range,		clc_index,

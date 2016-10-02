@@ -3,11 +3,12 @@ AM_YFLAGS = -d -v
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
 clc_SOURCES = main.c \
               opsdata.h node.h \
+              parser.y lexer.l \
               printext.c printext.h \
               eval.c eval.h \
               vector.c vector.h \
               memory.c memory.h \
-              parser.y lexer.l
+              plot.c plot.h
 
 DISTCLEANFILES = .deps/*.P
 

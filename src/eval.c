@@ -16,6 +16,7 @@
 #include "printext.h"
 #include "eval.h"
 #include "vector.h"
+#include "plot.h"
 
 typedef gsl_complex (*cpx_dyadic)(gsl_complex a, gsl_complex b);
 typedef gsl_complex (*cpx_monadic)(gsl_complex a);
