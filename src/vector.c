@@ -18,7 +18,76 @@
 
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
+	  
+#define dest_offset(r,c)  (((r) * node_cpx_vector_cols (dest)) + c)
+#define src_offset(s,r,c)  (((r) * (s)) + c)
 
+node_u
+clc_sigma (node_u modifier, node_u arg)
+{
+  node_u rc = arg;
+  if (get_type (arg) == TYPE_CPX_VECTOR) {
+    node_cpx_vector_s *ls = node_cpx_vector (arg);
+    int lrows = node_cpx_vector_rows (ls);
+    int lcols = node_cpx_vector_cols (ls);
+    if (lrows == 0) {
+      gsl_complex sum = {{0.0, 0.0}};
+      for (int i = 0; i < lcols; i++)
+	sum = gsl_complex_add (sum, node_cpx_vector_data (ls)[i]);
+      rc = create_complex_node (sum);
+    }
+    else {
+      int axis = 0;
+      if (get_type (modifier) == TYPE_COMPLEX) {
+	node_complex_s *mn = node_complex (modifier);
+	gsl_complex mv = node_complex_value(mn);
+	axis = (int)lrint (GSL_REAL (mv));
+      }
+      rc = create_complex_vector_node ();
+      node_cpx_vector_s *dest = node_cpx_vector (rc);
+      if (axis == 0) {
+	node_cpx_vector_rows (dest) = 0;
+	node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = 
+	  node_cpx_vector_cols (dest) = lrows;
+	node_cpx_vector_data (dest) =
+	  calloc (node_cpx_vector_max (dest), sizeof(gsl_complex));
+	gsl_complex sum;
+	for (int r = 0; r < lrows; r++) {
+	  sum = gsl_complex_rect (0.0, 0.0);
+	  for (int c = 0; c < lcols; c++) {
+	    int off = src_offset (lcols, r, c);
+	    sum = gsl_complex_add (sum, node_cpx_vector_data (ls)[off]);
+	  }
+	  node_cpx_vector_data (dest)[r] = sum;
+	}
+      }
+      else {
+	node_cpx_vector_rows (dest) = 0;
+	node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = 
+	  node_cpx_vector_cols (dest) = lcols;
+	node_cpx_vector_data (dest) =
+	  calloc (node_cpx_vector_max (dest), sizeof(gsl_complex));
+	gsl_complex sum;
+	for (int c = 0; c < lcols; c++) {
+	  sum = gsl_complex_rect (0.0, 0.0);
+	  for (int r = 0; r < lrows; r++) {
+	    int off = src_offset (lcols, r, c);
+	    sum = gsl_complex_add (sum, node_cpx_vector_data (ls)[off]);
+	  }
+	  node_cpx_vector_data (dest)[c] = sum;
+	}
+      }
+    }
+  }
+  return rc;
+}
+
+node_u
+clc_pi (node_u modifier, node_u arg)
+{
+  node_u rc = NULL_NODE;
+  return rc;
+}
 
 node_u
 clc_matrix_mul (node_u modifier, node_u la, node_u ra)
@@ -186,8 +255,8 @@ node_u
 clc_reshape (node_u modifier, node_u ln, node_u rn)
 {
   node_u rc = NULL_NODE;
-  node_u ra = do_eval (NULL, rn);
-  node_u la = do_eval (NULL, ln);
+  node_u ra = rn;
+  node_u la = ln;
 
   switch(TYPE_GEN (get_type (la), get_type (ra))) {
     case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_COMPLEX):
@@ -270,7 +339,7 @@ node_u
 clc_ravel (node_u modifier, node_u arg)
 {
   node_u rc = NULL_NODE;
-  node_u la = do_eval (NULL, arg);
+  node_u la = arg;
   switch(get_type (la)) {
   case TYPE_COMPLEX:
     {
@@ -304,7 +373,7 @@ clc_shape (node_u modifier, node_u arg)
 {
   node_u rc = NULL_NODE;
   
-  node_u la = do_eval (NULL, arg);
+  node_u la = arg;
   switch(get_type (la)) {
   case TYPE_COMPLEX:
     {
@@ -355,9 +424,9 @@ node_u
 clc_catenate (node_u modifier, node_u ln, node_u rn)
 {
   node_u rc = NULL_NODE;
-  node_u ra = do_eval (NULL, rn);
-  node_u la = do_eval (NULL, ln);
-  node_u mo = do_eval (NULL, modifier);
+  node_u ra = rn;
+  node_u la = ln;
+  node_u mo = modifier;
   
   if (get_type (la) == TYPE_LIST &&
       get_type (ra) == TYPE_LIST ) {	// both lists
@@ -403,10 +472,8 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
   }
   else if (get_type (la) == TYPE_CPX_VECTOR &&
 	   get_type (ra) == TYPE_CPX_VECTOR ) {	// both vectors
-	  
-#define dest_offset(r,c)  (((r) * node_cpx_vector_cols (dest)) + c)
-#define src_offset(s,r,c)  (((r) * (s)) + c)
 
+    printf ("hhhhhhhhhhhhhhh\n");
     int axis = 0;
     if (get_type (mo) == TYPE_COMPLEX) {
       node_complex_s *mn = node_complex (mo);
@@ -629,6 +696,22 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
   else if (get_type (la) == TYPE_COMPLEX &&
 	   get_type (ra) == TYPE_CPX_VECTOR ) {	//
     // fixme
+  }
+  else if (get_type (la) == TYPE_COMPLEX &&
+	   get_type (ra) == TYPE_COMPLEX ) {	//
+    node_complex_s *ls = node_complex (la);
+    gsl_complex lv = node_complex_value(ls);
+    node_complex_s *rs = node_complex (ra);
+    gsl_complex rv = node_complex_value(rs);
+    rc = create_complex_vector_node ();
+    node_cpx_vector_s *dest = node_cpx_vector (rc);
+    node_cpx_vector_rows (dest) = 0;
+    node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+      node_cpx_vector_cols (dest) = 2;
+    node_cpx_vector_data (dest) =
+	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+    node_cpx_vector_data (dest)[0] = lv;
+    node_cpx_vector_data (dest)[1] = rv;
   }
   else {					// neither lists
     node_list_s *list = malloc (sizeof(node_list_s));
