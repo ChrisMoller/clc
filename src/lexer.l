@@ -79,6 +79,7 @@ atan            { yylval.d = SYM_ATAN;   return BIF; }
 logb            { yylval.d = SYM_LOG;    return BIF; }
 real            { yylval.d = SYM_REAL;   return CLC_BIF; }
 imag            { yylval.d = SYM_IMAG;   return CLC_BIF; }
+sqrt            { yylval.d = SYM_SQRT;   return BIF; }
 sin             { yylval.d = SYM_SIN;    return BIF; }
 cos             { yylval.d = SYM_COS;    return BIF; }
 tan             { yylval.d = SYM_TAN;    return BIF; }

@@ -178,7 +178,6 @@ free_node (node_u node)
       node_cpx_vector_s *vs = node_cpx_vector (node);
       if (vs) {
 	if (node_cpx_vector_data (vs)) free (node_cpx_vector_data (vs));
-	printf ("freeing cpx %p\n", node_void (node));
 	free (vs);
       }
     }

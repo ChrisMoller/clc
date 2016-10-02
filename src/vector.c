@@ -186,8 +186,8 @@ node_u
 clc_reshape (node_u modifier, node_u ln, node_u rn)
 {
   node_u rc = NULL_NODE;
-  node_u ra = do_eval (rn);
-  node_u la = do_eval (ln);
+  node_u ra = do_eval (NULL, rn);
+  node_u la = do_eval (NULL, ln);
 
   switch(TYPE_GEN (get_type (la), get_type (ra))) {
     case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_COMPLEX):
@@ -270,7 +270,7 @@ node_u
 clc_ravel (node_u modifier, node_u arg)
 {
   node_u rc = NULL_NODE;
-  node_u la = do_eval (arg);
+  node_u la = do_eval (NULL, arg);
   switch(get_type (la)) {
   case TYPE_COMPLEX:
     {
@@ -304,7 +304,7 @@ clc_shape (node_u modifier, node_u arg)
 {
   node_u rc = NULL_NODE;
   
-  node_u la = do_eval (arg);
+  node_u la = do_eval (NULL, arg);
   switch(get_type (la)) {
   case TYPE_COMPLEX:
     {
@@ -355,9 +355,9 @@ node_u
 clc_catenate (node_u modifier, node_u ln, node_u rn)
 {
   node_u rc = NULL_NODE;
-  node_u ra = do_eval (rn);
-  node_u la = do_eval (ln);
-  node_u mo = do_eval (modifier);
+  node_u ra = do_eval (NULL, rn);
+  node_u la = do_eval (NULL, ln);
+  node_u mo = do_eval (NULL, modifier);
   
   if (get_type (la) == TYPE_LIST &&
       get_type (ra) == TYPE_LIST ) {	// both lists

@@ -57,8 +57,9 @@ void yyerror (char const *);
 stmt	:	/* null */
 	| stmt eof { if ($2) YYABORT; }
 	| stmt phrase eof {
-            node_u res = do_eval ($2);
-            print_node (res);
+            int noshow;
+            node_u res = do_eval (&noshow, $2);
+            if (!noshow) print_node (res);
 /*
             walk_nodes ();       #ifdef DO_TREE
 */

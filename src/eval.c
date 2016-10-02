@@ -48,19 +48,19 @@ static node_u
 do_range (node_u modifier, node_u la, node_u ra)
 {
   node_u rc = NULL_NODE;
-  node_u rn = do_eval (ra);
+  node_u rn = do_eval (NULL, ra);
   
   if (get_type (rn) == TYPE_COMPLEX) {
     gsl_complex incr = gsl_complex_rect (1.0, 0.0);
     gsl_complex init = gsl_complex_rect (0.0, 0.0);
     
-    node_u mod = do_eval (modifier);
+    node_u mod = do_eval (NULL, modifier);
     if (get_type (mod) == TYPE_COMPLEX) {
       node_complex_s *mn = node_complex (mod);
       incr = node_complex_value (mn);
     }
 
-    node_u ln = do_eval (la);
+    node_u ln = do_eval (NULL, la);
     if (get_type (ln) == TYPE_COMPLEX) {
       node_complex_s *ls = node_complex (ln);
       init = node_complex_value (ls);
@@ -144,9 +144,9 @@ var_action (const void *nodep, const VISIT which, const int depth)
 node_u
 clc_assign (node_u modifier, node_u la, node_u ra)
 {
-  node_u rc = do_eval (ra);
-  node_u ls = do_eval (la);
-  
+  node_u rc = do_eval (NULL, ra);
+  node_u ls = do_eval (NULL, la);
+
   switch(get_type (ls)) {
   case TYPE_NULL:
     break;
@@ -159,12 +159,12 @@ clc_assign (node_u modifier, node_u la, node_u ra)
       node_incref (rc);
       void *found = tfind (sa, &global_root, var_compare);
       if (found) {
-	 symbol_entry_s *vp = *(symbol_entry_s **)found;
-	 if (sym_lbl (vp)) free (sym_lbl (vp));
-	 node_decref (sym_node (vp));
-	 free (vp);
+	symbol_entry_s *vp = *(symbol_entry_s **)found;
+	node_decref (sym_node (vp));
+	free (sym_lbl (sa));
+	sym_node (vp) = rc;
       }
-      tsearch (sa, &global_root, var_compare);
+      else tsearch (sa, &global_root, var_compare);
       rc = NULL_NODE;	// fixme this migh not be the right thing to do
 #if 0
       printf ("\nvars\n");
@@ -189,7 +189,7 @@ node_u
 clc_complex_real (node_u modifier, node_u iarg)
 {
   node_u rc = NULL_NODE;
-  node_u arg = do_eval (iarg);
+  node_u arg = do_eval (NULL, iarg);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *la = node_complex (arg);
     gsl_complex aa = node_complex_value (la);
@@ -204,7 +204,7 @@ node_u
 clc_complex_imag (node_u modifier, node_u iarg)
 {
   node_u rc = NULL_NODE;
-  node_u arg = do_eval (iarg);
+  node_u arg = do_eval (NULL, iarg);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *la = node_complex (arg);
     gsl_complex aa = node_complex_value (la);
@@ -219,7 +219,7 @@ node_u
 clc_complex_abs (node_u modifier, node_u iarg)
 {
   node_u rc = NULL_NODE;
-  node_u arg = do_eval (iarg);
+  node_u arg = do_eval (NULL, iarg);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *la = node_complex (arg);
     gsl_complex aa = node_complex_value (la);
@@ -234,7 +234,7 @@ node_u
 clc_complex_arg (node_u modifier, node_u iarg)
 {
   node_u rc = NULL_NODE;
-  node_u arg = do_eval (iarg);
+  node_u arg = do_eval (NULL, iarg);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *la = node_complex (arg);
     gsl_complex aa = node_complex_value (la);
@@ -246,8 +246,9 @@ clc_complex_arg (node_u modifier, node_u iarg)
 }
 
 node_u
-do_eval (node_u node)
+do_eval (int *noshow, node_u node)
 {
+  if (noshow) *noshow = 0;
   node_u rc = NULL_NODE;
   switch(get_type (node)) {
   case TYPE_NULL:
@@ -274,13 +275,14 @@ do_eval (node_u node)
   case TYPE_DYADIC:
     {
       node_dyadic_s *dyad = node_dyadic (node);
-      node_u ra = do_eval (node_dyadic_ra (dyad));
-      node_u la = do_eval (node_dyadic_la (dyad));
+      node_u ra = do_eval (NULL, node_dyadic_ra (dyad));
+      node_u la = do_eval (NULL, node_dyadic_la (dyad));
       sym_e sym = node_dyadic_op (dyad);
       node_u modifier = node_dyadic_modifier (dyad);
       op_type_e op_type = node_dyadic_op_type (dyad);
 
       if (op_type == OP_TYPE_CLC) {
+	if (noshow && sym == SYM_EQUAL) *noshow = 1;
 	clc_dyadic op = op_dyadic (sym);
 	if (op) rc = (*op)(modifier, la, ra);
 	return rc;
@@ -418,7 +420,7 @@ do_eval (node_u node)
   case TYPE_MONADIC:
     {
       node_monadic_s *monad = node_monadic (node);
-      node_u arg = do_eval (node_monadic_arg (monad));
+      node_u arg = do_eval (NULL, node_monadic_arg (monad));
       sym_e sym = node_monadic_op (monad);
       op_type_e op_type = node_monadic_op_type (monad);
       node_u modifier = node_monadic_modifier (monad);
@@ -476,8 +478,8 @@ do_eval (node_u node)
 	    case 2:
 	      {
 		if (op_nr_dyadic (sym) == 2) {
-		  node_u a0 = do_eval (node_list_list (list)[0]);
-		  node_u a1 = do_eval (node_list_list (list)[1]);
+		  node_u a0 = do_eval (NULL, node_list_list (list)[0]);
+		  node_u a1 = do_eval (NULL, node_list_list (list)[1]);
 		  if (get_type (a0) == TYPE_COMPLEX &&
 		      get_type (a1) == TYPE_COMPLEX) {
 		    cpx_dyadic op = op_dyadic (sym);
