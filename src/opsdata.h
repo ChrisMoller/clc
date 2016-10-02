@@ -1,7 +1,5 @@
 /***
     TODO:
-        sum     across vector or mtx
-        product across vector or mtx
 	comparisons/conditionals
 ***/
 

@@ -3,6 +3,7 @@
 #endif
 #define _GNU_SOURCE
 #include <getopt.h>
+#include <malloc.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,24 +30,38 @@ desc_table_s desc_table[] = {
 #define desc_monadic(d) desc_table[d].monadic_desc
 
 void set_string (const char *s);
+void set_file (FILE *s);
 void delete_buffer();
 int yyparse (void);
 
 int
 main (int ac, char *av[])
 {
+  char **exprs =  NULL;
+  int    exprs_next = 0;
+  int    exprs_max  = 0;
   {
     int c;
     int option_index = 0;
+#define EXPRS_INC	16
     static int show_ops =  0;
     static struct option long_options[] = {
       {"yydebug", no_argument,       &yydebug, 1},
       {"showops", no_argument,       &show_ops, 1},
       {0, 0, 0, 0}
     };
-    while (-1 != (c = getopt_long (ac, av, "h",
+    while (-1 != (c = getopt_long (ac, av, "e:h",
                                    long_options, &option_index))) {
       switch(c) {
+      case 'e':
+	{
+	  if (exprs_max <= exprs_next) {
+	    exprs_max += EXPRS_INC;
+	    exprs = realloc (exprs, exprs_max * sizeof(char *));
+	  }
+	  exprs[exprs_next++] = optarg;
+	}
+	break;
       case 'h':
 	printf ("\nformat:\n");
 	printf ("\n");
@@ -79,11 +94,32 @@ then exit\n");
   
   print_init ();		// sets up printf extensions
 
+#if 1
+  if (exprs) {
+    for (int e = 0; e < exprs_next; e++) {
+      set_string(exprs[e]);
+      yyparse ();
+      delete_buffer();
+    }
+  }
+  
+  for (int i = optind; i < ac; i++) {
+    FILE *exec_file;
+    exec_file = fopen (av[i], "r");
+    if (exec_file) {                                // report errors
+      set_file (exec_file);
+      yyparse ();
+      delete_buffer();
+      fclose (exec_file);
+    }
+  }
+#else
   for (int i = 1; i < ac; i++) {
     set_string(av[i]);
     yyparse ();
     delete_buffer();
   }
+#endif
 
 
   return 0;

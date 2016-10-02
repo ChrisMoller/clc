@@ -30,7 +30,7 @@ set testdata {
 global CLC
 foreach pattern $testdata {
     set inputs [lindex $pattern 0]
-    eval "spawn $CLC $inputs"
+    eval "spawn $CLC -e $inputs"
     expect {
         -re [lindex $pattern 1] {
             pass $inputs
