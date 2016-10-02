@@ -532,7 +532,6 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
   else if (get_type (la) == TYPE_CPX_VECTOR &&
 	   get_type (ra) == TYPE_CPX_VECTOR ) {	// both vectors
 
-    printf ("hhhhhhhhhhhhhhh\n");
     int axis = 0;
     if (get_type (mo) == TYPE_COMPLEX) {
       node_complex_s *mn = node_complex (mo);
@@ -749,12 +748,50 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
     }
   }
   else if (get_type (la) == TYPE_CPX_VECTOR &&
-	   get_type (ra) == TYPE_COMPLEX ) {	//
-    // fixme
+	   get_type (ra) == TYPE_COMPLEX ) {
+    // ./clc -e '[4 5 6],7'
+    node_cpx_vector_s *ls = node_cpx_vector (la);
+    node_complex_s *rs = node_complex (ra);
+    int lrows = node_cpx_vector_rows (ls);
+    if (lrows == 0) {
+      int lcols = node_cpx_vector_cols (ls);
+      rc = create_complex_vector_node ();
+      node_cpx_vector_s *dest = node_cpx_vector (rc);
+      node_cpx_vector_rows (dest) = 0;
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	node_cpx_vector_cols (dest) = lcols + 1;
+      node_cpx_vector_data (dest) =
+	malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+      memmove (node_cpx_vector_data (dest),
+	       node_cpx_vector_data (ls), lcols * sizeof(gsl_complex));
+      node_cpx_vector_data (dest)[lcols] = node_complex_value(rs);
+    }
+    else {
+      // fixme -- dim mismatch
+    }
   }
   else if (get_type (la) == TYPE_COMPLEX &&
 	   get_type (ra) == TYPE_CPX_VECTOR ) {	//
-    // fixme
+    // ./clc -e '7,[4 5 6]'
+    node_complex_s *ls = node_complex (la);
+    node_cpx_vector_s *rs = node_cpx_vector (ra);
+    int rrows = node_cpx_vector_rows (rs);
+    if (rrows == 0) {
+      int rcols = node_cpx_vector_cols (rs);
+      rc = create_complex_vector_node ();
+      node_cpx_vector_s *dest = node_cpx_vector (rc);
+      node_cpx_vector_rows (dest) = 0;
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	node_cpx_vector_cols (dest) = rcols + 1;
+      node_cpx_vector_data (dest) =
+	malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+      node_cpx_vector_data (dest)[0] = node_complex_value(ls);
+      memmove (&node_cpx_vector_data (dest)[1],
+	       node_cpx_vector_data (rs), rcols * sizeof(gsl_complex));
+    }
+    else {
+      // fixme -- dim mismatch
+    }
   }
   else if (get_type (la) == TYPE_COMPLEX &&
 	   get_type (ra) == TYPE_COMPLEX ) {	//
