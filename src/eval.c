@@ -42,7 +42,7 @@ ops_s op_table[] = {
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
 
-void *global_root = NULL;
+static void *global_root = NULL;
 
 static node_u
 do_range (node_u modifier, node_u la, node_u ra)
@@ -114,7 +114,8 @@ var_compare (const void *a, const void *b)
 {
   const symbol_entry_s *sa = a;
   const symbol_entry_s *sb = b;
-  return strcmp (sym_lbl (sa), sym_lbl (sb));
+  int rc = strcmp (sym_lbl (sa), sym_lbl (sb));
+  return rc;
 }
 
 #if 0
@@ -144,25 +145,25 @@ var_action (const void *nodep, const VISIT which, const int depth)
 node_u
 clc_assign (node_u modifier, node_u la, node_u ra)
 {
-  node_u rc = do_eval (NULL, ra);
-  node_u ls = do_eval (NULL, la);
-
-  switch(get_type (ls)) {
+  node_u rc =  ra;
+  
+  switch(get_type (la)) {
   case TYPE_NULL:
     break;
   case TYPE_STRING:	// unquoted string
     {
-      node_string_s *lv = node_string (ls);
+      node_string_s *lv = node_string (la);
       symbol_entry_s *sa = malloc (sizeof(symbol_entry_s));
       sym_lbl (sa) = strdup (node_string_value (lv));
-      sym_node (sa) = rc;
-      node_incref (rc);
+      sym_node (sa) = ra;
+      node_incref (ra);
       void *found = tfind (sa, &global_root, var_compare);
       if (found) {
 	symbol_entry_s *vp = *(symbol_entry_s **)found;
 	node_decref (sym_node (vp));
 	free (sym_lbl (sa));
-	sym_node (vp) = rc;
+	sym_node (vp) = ra;
+	node_incref (ra);
       }
       else tsearch (sa, &global_root, var_compare);
       rc = NULL_NODE;	// fixme this migh not be the right thing to do
@@ -276,8 +277,10 @@ do_eval (int *noshow, node_u node)
     {
       node_dyadic_s *dyad = node_dyadic (node);
       node_u ra = do_eval (NULL, node_dyadic_ra (dyad));
-      node_u la = do_eval (NULL, node_dyadic_la (dyad));
       sym_e sym = node_dyadic_op (dyad);
+      node_u la = node_dyadic_la (dyad);
+      if (sym != SYM_EQUAL || get_type (la) != TYPE_STRING)
+	la = do_eval (NULL, la);
       node_u modifier = node_dyadic_modifier (dyad);
       op_type_e op_type = node_dyadic_op_type (dyad);
 
