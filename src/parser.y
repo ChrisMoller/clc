@@ -31,7 +31,7 @@ void yyerror (char const *);
 %token	   EOP
 %token	   EOS
 %token <v> NUMBER
-%token <s> STRING
+%token <s> SYMBOL
 %token <s> QSTRING
 %right <d> RIGHT_DYADIC
 %right <d> RIGHT_CLC_DYADIC
@@ -73,7 +73,7 @@ eof     : EOS { $$ = 1; }
 	| EOP { $$ = 0; }
         ; 
 
-phrase:   STRING  { $$ = create_string_node (TYPE_STRING, $1); }
+phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 	| QSTRING { $$ = create_string_node (TYPE_LITERAL, $1); }
 	| NUMBER  { $$ = create_complex_node ($1); }
 	| phrase RIGHT_DYADIC modifier phrase

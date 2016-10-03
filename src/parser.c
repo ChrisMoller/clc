@@ -125,7 +125,7 @@ extern int yydebug;
      EOP = 258,
      EOS = 259,
      NUMBER = 260,
-     STRING = 261,
+     SYMBOL = 261,
      QSTRING = 262,
      RIGHT_DYADIC = 263,
      RIGHT_CLC_DYADIC = 264,
@@ -143,7 +143,7 @@ extern int yydebug;
 #define EOP 258
 #define EOS 259
 #define NUMBER 260
-#define STRING 261
+#define SYMBOL 261
 #define QSTRING 262
 #define RIGHT_DYADIC 263
 #define RIGHT_CLC_DYADIC 264
@@ -507,7 +507,7 @@ static const yytype_uint8 yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "EOP", "EOS", "NUMBER", "STRING",
+  "$end", "error", "$undefined", "EOP", "EOS", "NUMBER", "SYMBOL",
   "QSTRING", "RIGHT_DYADIC", "RIGHT_CLC_DYADIC", "BIF", "CLC_BIF",
   "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACKET", "RIGHT_BRACKET",
   "LEFT_BRACE", "RIGHT_BRACE", "$accept", "stmt", "eof", "phrase",
@@ -1454,7 +1454,7 @@ yyreduce:
   case 7:
 /* Line 1792 of yacc.c  */
 #line 76 "parser.y"
-    { (yyval.n) = create_string_node (TYPE_STRING, (yyvsp[(1) - (1)].s)); }
+    { (yyval.n) = create_string_node (TYPE_SYMBOL, (yyvsp[(1) - (1)].s)); }
     break;
 
   case 8:

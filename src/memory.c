@@ -192,7 +192,7 @@ free_node (node_u node)
       }
     }
     break;
-  case TYPE_STRING:
+  case TYPE_SYMBOL:
     // fixme -- free referred val here then fall through
   case TYPE_LITERAL:
     {

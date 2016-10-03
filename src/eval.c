@@ -151,7 +151,7 @@ clc_assign (node_u modifier, node_u la, node_u ra)
   switch(get_type (la)) {
   case TYPE_NULL:
     break;
-  case TYPE_STRING:	// unquoted string
+  case TYPE_SYMBOL:	// unquoted string
     {
       node_string_s *lv = node_string (la);
       symbol_entry_s *sa = malloc (sizeof(symbol_entry_s));
@@ -255,7 +255,7 @@ do_eval (int *noshow, node_u node)
   switch(get_type (node)) {
   case TYPE_NULL:
     break;
-  case TYPE_STRING:
+  case TYPE_SYMBOL:
     {
       symbol_entry_s sa;
       node_string_s *lv = node_string (node);
@@ -280,7 +280,7 @@ do_eval (int *noshow, node_u node)
       node_u ra = do_eval (NULL, node_dyadic_ra (dyad));
       sym_e sym = node_dyadic_op (dyad);
       node_u la = node_dyadic_la (dyad);
-      if (sym != SYM_EQUAL || get_type (la) != TYPE_STRING)
+      if (sym != SYM_EQUAL || get_type (la) != TYPE_SYMBOL)
 	la = do_eval (NULL, la);
       node_u modifier = node_dyadic_modifier (dyad);
       op_type_e op_type = node_dyadic_op_type (dyad);
@@ -556,7 +556,7 @@ print_node (node_u node)
 	print_node (node_list_list (list)[i]);
     }
     break;
-  case TYPE_STRING:
+  case TYPE_SYMBOL:
   case TYPE_DYADIC:
   case TYPE_MONADIC:
     break;
@@ -587,7 +587,7 @@ free_node (node_u node)
       }
     }
     break;
-  case TYPE_STRING:
+  case TYPE_SYMBOL:
     // fixme -- free referred val here then fall through
   case TYPE_LITERAL:
     {

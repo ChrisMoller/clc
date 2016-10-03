@@ -14,6 +14,8 @@
 
 #define yyterminate() return EOS
 
+// http://stackoverflow.com/questions/5418181/flex-lex-encoding-strings-with-escaped-characters
+
 static int reading_file = 0;
 static double cvt_r (const char *nptr, char **endptr);
 static double cvt_i (const char *nptr, char **endptr);
@@ -30,7 +32,7 @@ NUMBER_T3   \.{DIGIT}+([eE]([+-])?{DIGIT}+)?[dDrR]?
 NUMBER      {NUMBER_T1}|{NUMBER_T2}|{NUMBER_T3}
 IMAGINARY   {NUMBER}[iIjJ]
 COMPLEX     {NUMBER}[+-]{IMAGINARY}
-STRING      [[:alpha:]][[:alnum:]_]*
+SYMBOL      [[:alpha:]][[:alnum:]_]*
 QSTR        [^\"]*
 
 %option noyywrap
@@ -112,10 +114,10 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 pi		{ yylval.v = gsl_complex_rect (M_PI, 0.0); return NUMBER; }
 e		{ yylval.v = gsl_complex_rect (M_E,  0.0); return NUMBER; }
 
-{STRING}        {
+{SYMBOL}        {
     {	// gets here only if not a function
 	yylval.s = strdup (yytext);
-	return STRING;
+	return SYMBOL;
     }
 }
 

@@ -94,12 +94,11 @@ then exit\n");
   
   print_init ();		// sets up printf extensions
 
-#if 1
   if (exprs) {
     for (int e = 0; e < exprs_next; e++) {
-      set_string(exprs[e]);
+      set_string (exprs[e]);
       yyparse ();
-      delete_buffer();
+      delete_buffer ();
     }
   }
   
@@ -112,14 +111,12 @@ then exit\n");
       delete_buffer();
       fclose (exec_file);
     }
+    else {	// not a file, so try to interpret it
+      set_string (av[i]);
+      yyparse ();
+      delete_buffer ();
+    }
   }
-#else
-  for (int i = 1; i < ac; i++) {
-    set_string(av[i]);
-    yyparse ();
-    delete_buffer();
-  }
-#endif
 
 
   return 0;
