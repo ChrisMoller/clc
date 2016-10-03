@@ -13,8 +13,13 @@
 #include "printext.h"
 #include "memory.h"
 
+static char *qbuffer      = NULL;
+static int   qbuffer_max  = 0;
+static int   qbuffer_next = 0;
+#define QBUFFER_INCR 64
+
 #ifdef DO_TREE
-void *node_root = NULL;
+static void *node_root = NULL;
 
 static int
 node_compare (const void *a, const void *b)
@@ -58,6 +63,43 @@ walk_nodes ()
   twalk(node_root, action);
 }
 #endif
+
+char *
+get_qbuffer ()
+{
+  return qbuffer;
+}
+
+void
+clear_qbuffer ()
+{
+  qbuffer = NULL;
+  qbuffer_next = 0;
+}
+
+void
+cat_string_to_qbuffer (char *str)
+{
+  size_t len = strlen (str);
+  if (qbuffer_max <= qbuffer_next + len + 4) {
+    qbuffer_max += len + QBUFFER_INCR;
+    qbuffer = realloc (qbuffer, qbuffer_max);
+  }
+  memmove(&qbuffer[qbuffer_next], str, len);
+  qbuffer_next += len;
+  qbuffer[qbuffer_next] = 0;
+}
+
+void
+cat_char_to_qbuffer (char chr)
+{
+  if (qbuffer_max <= qbuffer_next + 1) {
+    qbuffer_max += QBUFFER_INCR;
+    qbuffer = realloc (qbuffer, qbuffer_max);
+  }
+  qbuffer[qbuffer_next++] = chr;
+  qbuffer[qbuffer_next] = 0;
+}
 
 void
 node_incref (node_u node)

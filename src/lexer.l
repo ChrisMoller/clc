@@ -1,9 +1,11 @@
 %top{
 #define _GNU_SOURCE
+#include <malloc.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <values.h>
+#include <string.h>
+//#include <values.h>
 
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>    
@@ -11,6 +13,7 @@
 #include "printext.h"
 #include "node.h"
 #include "parser.h"
+#include "memory.h"
 
 #define yyterminate() return EOS
 
@@ -19,7 +22,6 @@
 static int reading_file = 0;
 static double cvt_r (const char *nptr, char **endptr);
 static double cvt_i (const char *nptr, char **endptr);
-
 
 static void yyunput (int c, register char * yy_bp ) __attribute__ ((unused));
 static int input  (void) __attribute__ ((unused));
@@ -33,7 +35,7 @@ NUMBER      {NUMBER_T1}|{NUMBER_T2}|{NUMBER_T3}
 IMAGINARY   {NUMBER}[iIjJ]
 COMPLEX     {NUMBER}[+-]{IMAGINARY}
 SYMBOL      [[:alpha:]][[:alnum:]_]*
-QSTR        [^\"]*
+QSTR        [^\\\"]*
 
 %option noyywrap
 %x QUOTED
@@ -124,9 +126,12 @@ e		{ yylval.v = gsl_complex_rect (M_E,  0.0); return NUMBER; }
 <COMMENT>.*		/* ignore everything */
 <COMMENT>[\n]		{  BEGIN (INITIAL); }
 
-\"                      BEGIN (QUOTED);
-<QUOTED>{QSTR}           { yylval.s = strdup (yytext); return QSTRING; }
-<QUOTED>\"              BEGIN (INITIAL);
+\"                      {BEGIN (QUOTED); clear_qbuffer (); }
+<QUOTED>{QSTR}          { cat_string_to_qbuffer (yytext); }
+<QUOTED>\\\"            { cat_char_to_qbuffer ('"'); }
+<QUOTED>\"              { BEGIN (INITIAL); 
+                          yylval.s = strdup (get_qbuffer());
+                          return QSTRING;}
 
 \\[\n]      /* ignore terminal backslash */
 
@@ -188,5 +193,4 @@ delete_buffer ()
   reading_file = 0;
   yy_delete_buffer(YY_CURRENT_BUFFER);
 }
-
 

@@ -1,6 +1,11 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+char *get_qbuffer ();
+void clear_qbuffer ();
+void cat_string_to_qbuffer (char *str);
+void cat_char_to_qbuffer (char chr);
+
 void   free_node (node_u node);
 node_u create_string_node (type_e type, const char *s);
 node_u create_complex_node (gsl_complex v);
