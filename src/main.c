@@ -13,6 +13,7 @@
 
 #include "printext.h"
 #include "node.h"
+#include "eval.h"
 #include "parser.h"
 
 typedef struct {

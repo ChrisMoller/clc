@@ -3,7 +3,10 @@
 #endif
 #define _GNU_SOURCE
 #include <math.h>
+#ifdef _PARSE_OPT_STRINGS
 #include <regex.h>
+#endif
+#include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +20,7 @@
 #include "node.h"
 //#include "memory.h"
 #include "eval.h"
-//#include "printext.h"
+#include "printext.h"
 
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
@@ -26,12 +29,38 @@ static node_type_s null_node = { TYPE_NULL };
 #define src_offset(s,r,c)  (((r) * (s)) + c)
 
 typedef struct {
-  FILE          *out_stream;
+  FILE 		*out_stream;
+  PLINT		 bg_colour[3];
 } plot_options_s;
-#define plot_options_out_stream(p)      ((p)->out_stream)
+#define plot_options_out_stream(p)	((p)->out_stream)
+#define plot_options_bg_colour(p)	((p)->bg_colour)
+#define COLOUR_IDX_RED		0
+#define COLOUR_IDX_GREEN	1
+#define COLOUR_IDX_BLUE		2
+#define plot_options_bg_colour_red(p)	((p)->bg_colour[COLOUR_IDX_RED])
+#define plot_options_bg_colour_green(p)	((p)->bg_colour[COLOUR_IDX_GREEN])
+#define plot_options_bg_colour_blue(p)	((p)->bg_colour[COLOUR_IDX_BLUE])
 
 plot_options_s plot_options = {
   .out_stream = NULL
+};
+
+static void
+parseopts_set_bg_colour (plot_options_s *plot_options, char *arg)
+{
+#if 0
+  PLINT red = -1, green = -1, blue = -1;
+  if (parse_colour (arg, &red, &green, &blue, COLOUR_BG)) {
+    plot_options_bg_colour_red (plot_options)   = red;
+    plot_options_bg_colour_green (plot_options) = green;
+    plot_options_bg_colour_blue (plot_options)  = blue;
+  }
+#endif
+}
+
+static const ENTRY plotopts[] = {
+  {"bgcolour",          parseopts_set_bg_colour},
+  {"bgcolor",           parseopts_set_bg_colour},
 };
 
 static void
@@ -74,6 +103,7 @@ init_plplot ()
   plinit ();
 }
 
+#ifdef _PARSE_OPT_STRINGS
 /***
     strip off leading spaces and tabs [[*space]]*
     identify kwd                      ([[:alpha:]][[:alnum:]_]*)
@@ -85,6 +115,21 @@ init_plplot ()
  ***/
 #define RE \
   "[[:space:]]*([[:alpha:]][[:alnum:]_]*)[[:space:]]*(=[[:space:]]*\"([^\"]*)\")?(.*)"
+#endif
+
+static void
+parse_opts_list (node_list_s *es)
+{
+  int nr_elems = node_list_next (es);
+  if (nr_elems > 0) {
+    node_u kwd_node = node_list_list (es)[0];
+    if (get_type (kwd_node) == TYPE_LITERAL) {
+      node_string_s *kns = node_string (kwd_node);
+      char *kwd = node_string_value (kns);
+      printf ("kwd = \"%s\"\n", kwd);
+    }
+  }
+}
 
 node_u
 clc_plot (node_u modifier, node_u arg)
@@ -96,14 +141,15 @@ clc_plot (node_u modifier, node_u arg)
   PLFLT *xvec = NULL;
   PLFLT *yvec = NULL;
   int count = 0;
+#ifdef _PARSE_OPT_STRINGS
   static regex_t preg;
   static int preg_set = 0;
-  
 
   if (!preg_set) {
     regcomp (&preg, RE, REG_ICASE | REG_EXTENDED);
     preg_set = 1;
   }
+#endif
 
 
   if (get_type (arg) == TYPE_CPX_VECTOR) {
@@ -129,6 +175,12 @@ clc_plot (node_u modifier, node_u arg)
     for (int e = 0; e < elements; e++) {
       node_u elem = node_list_list (ls)[e];
       switch(get_type (elem)) {
+      case TYPE_LIST:
+	{
+	  node_list_s *es = node_list (elem);
+	  parse_opts_list (es);
+	}
+	break;
       case TYPE_CPX_VECTOR:
 	{
 	  node_cpx_vector_s *ls = node_cpx_vector (elem);
@@ -149,6 +201,8 @@ clc_plot (node_u modifier, node_u arg)
 	break;
       case TYPE_LITERAL:
 	{
+#ifndef _PARSE_OPT_STRINGS
+#else
 	  node_string_s *ns = node_string (elem);
 	  char *str = strdup (node_string_value (ns));
 	  char *str_base = str;
@@ -176,6 +230,7 @@ clc_plot (node_u modifier, node_u arg)
 	    if (match) free (match);
 	    free (str_base);
 	  }
+#endif
 	}
 	break;
       default:

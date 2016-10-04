@@ -156,9 +156,9 @@ clc_matrix_mul (node_u modifier, node_u la, node_u ra)
       get_type (ra) == TYPE_CPX_VECTOR) {
     // ./clc '([2 3]<>[.11 .12 .13 .21 .22 .23])><([3 2]<>[1011 1012 1021 1022 1031 1032])'
     // a b c     r s     ar+bt+cw   as+bu+cx   
-    // d e f ><  t u  =  dr+et+fw	  ds+eu+fx
-    // g h i     w x     gr+ht+iw	  gs+hu+ix
-    // j k l             jr+kt+lw	  js+ku+lx
+    // d e f ><  t u  =  dr+et+fw   ds+eu+fx
+    // g h i     w x     gr+ht+iw   gs+hu+ix
+    // j k l             jr+kt+lw   js+ku+lx
     node_cpx_vector_s *ls = node_cpx_vector (la);
     node_cpx_vector_s *rs = node_cpx_vector (ra);
     int lrows = node_cpx_vector_rows (ls);
@@ -486,9 +486,18 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
   node_u ra = rn;
   node_u la = ln;
   node_u mo = modifier;
-  
   if (get_type (la) == TYPE_LIST &&
       get_type (ra) == TYPE_LIST ) {	// both lists
+#if 1
+    node_list_s *list = malloc (sizeof(node_list_s));
+    node_list_type (list) = TYPE_LIST;
+    node_list_max (list) = NODE_LIST_INCR;
+    node_list_list (list) = malloc (NODE_LIST_INCR * sizeof(node_u));
+    node_list_list (list)[0] = la;
+    node_list_list (list)[1] = ra;
+    node_list_next (list) = 2;
+    rc = (node_u)list;
+#else
     node_list_s *tolist   = node_list (la);
     node_list_s *fromlist = node_list (ra);
     int needed = node_list_next (tolist) + node_list_next (fromlist);
@@ -503,6 +512,7 @@ clc_catenate (node_u modifier, node_u ln, node_u rn)
 	     node_list_next (fromlist) * sizeof (node_u));
     node_list_next (tolist) += node_list_next (fromlist);
     rc = la;
+#endif
   }
   else if (get_type (la) == TYPE_LIST) {	// left list, right not
     node_list_s *list = node_list (la);

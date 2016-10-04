@@ -73,7 +73,6 @@ get_qbuffer ()
 void
 clear_qbuffer ()
 {
-  qbuffer = NULL;
   qbuffer_next = 0;
 }
 
@@ -104,13 +103,35 @@ cat_char_to_qbuffer (char chr)
 void
 node_incref (node_u node)
 {
-  node_refcnt (node)++; 
+  node_refcnt (node)++;
+  switch(get_type (node)) {
+  case TYPE_LIST:
+    {
+      node_list_s *list = node_list (node);
+      for (int i = 0; i < node_list_next (list); i++) 
+	node_incref (node_list_list (list)[i]);
+    }
+    break;
+  default:
+    break;
+  }
 }
 
 void
 node_decref (node_u node)
 {
   if (--node_refcnt (node) <= 0) free_node (node);
+  switch(get_type (node)) {
+  case TYPE_LIST:
+    {
+      node_list_s *list = node_list (node);
+      for (int i = 0; i < node_list_next (list); i++) 
+	node_decref (node_list_list (list)[i]);
+    }
+    break;
+  default:
+    break;
+  }
 }
 
 node_u
