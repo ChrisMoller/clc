@@ -35,6 +35,7 @@ void yyerror (char const *);
 %token <s> QSTRING
 %right <d> RIGHT_DYADIC
 %right <d> RIGHT_CLC_DYADIC
+%left <d>  LEFT_CLC_DYADIC
 %right <d> BIF
 %right <d> CLC_BIF
 %token     LEFT_PAREN
@@ -43,6 +44,7 @@ void yyerror (char const *);
 %token     RIGHT_BRACKET
 %token     LEFT_BRACE
 %token     RIGHT_BRACE
+%token     RIGHT_ARROW
 %type  <n> phrase
 %type  <n> modifier
 %type  <n> vector
@@ -59,7 +61,7 @@ stmt	:	/* null */
 	| stmt phrase eof {
             int noshow;
             node_u res = do_eval (&noshow, $2);
-            if (!noshow) print_node (res);
+            if (!noshow) print_node (0, res);
 /*
             walk_nodes ();       #ifdef DO_TREE
 */
@@ -80,6 +82,8 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3, $4); }
 	| phrase RIGHT_CLC_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
+	| phrase LEFT_CLC_DYADIC modifier phrase
+		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
 	| RIGHT_DYADIC modifier phrase
 		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2, $3); }
 	| RIGHT_CLC_DYADIC modifier phrase
@@ -93,6 +97,7 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 	;
 
 modifier : /* empty */ { $$ = NULL_NODE; }
+	 | LEFT_BRACE  RIGHT_BRACE { $$ = NULL_NODE; }
 	 | LEFT_BRACE phrase RIGHT_BRACE { $$ = $2; }
 	 ;
 

@@ -43,7 +43,47 @@ ops_s op_table[] = {
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
 
-static void *global_root = NULL;
+static void *global_symtab = NULL;
+static void *current_symtab = NULL;
+static void **symtab_stack = NULL;
+static int   symtab_stack_next = 0;
+static int   symtab_stack_max  = 0;
+#define SYMTAB_INCR 16
+
+void
+push_symtab ()
+{
+  if (symtab_stack_max <= symtab_stack_next) {
+    symtab_stack_max += SYMTAB_INCR;
+    symtab_stack = realloc (symtab_stack, symtab_stack_max * sizeof(void *));
+  }
+  symtab_stack[symtab_stack_next++] = current_symtab;
+  current_symtab = NULL;
+}
+
+static void
+free_symbol (void *ptr)
+{
+  symbol_entry_s *vp = (symbol_entry_s *)ptr;
+  if (sym_lbl (vp)) free (sym_lbl (vp));
+  free_node (sym_node (vp));
+}
+
+void *
+get_current_symtab ()
+{
+  return current_symtab;
+}
+
+void
+pop_symtab ()
+{
+  if (symtab_stack_next > 0) {
+    if (current_symtab) tdestroy (current_symtab, free_symbol);
+    current_symtab = symtab_stack[--symtab_stack_next];
+  }
+  else current_symtab = global_symtab;
+}
 
 static node_u
 do_range (node_u modifier, node_u la, node_u ra)
@@ -103,13 +143,6 @@ clc_range (node_u modifier, node_u la, node_u ra)
   return do_range (modifier, la, ra);
 }
 
-typedef struct {
-  char *lbl;
-  node_u      node;
-} symbol_entry_s;
-#define sym_lbl(e)  ((e)->lbl)
-#define sym_node(e) ((e)->node)
-
 static int
 var_compare (const void *a, const void *b)
 {
@@ -158,7 +191,7 @@ clc_assign (node_u modifier, node_u la, node_u ra)
       sym_lbl (sa) = strdup (node_string_value (lv));
       sym_node (sa) = ra;
       node_incref (ra);
-      void *found = tfind (sa, &global_root, var_compare);
+      void *found = tfind (sa, &current_symtab, var_compare);
       if (found) {
 	symbol_entry_s *vp = *(symbol_entry_s **)found;
 	node_decref (sym_node (vp));
@@ -166,11 +199,11 @@ clc_assign (node_u modifier, node_u la, node_u ra)
 	sym_node (vp) = ra;
 	node_incref (ra);
       }
-      else tsearch (sa, &global_root, var_compare);
+      else tsearch (sa, &current_symtab, var_compare);
       rc = NULL_NODE;	// fixme this migh not be the right thing to do
 #if 0
       printf ("\nvars\n");
-      twalk(global_root, var_action);
+      twalk (current_symtab, var_action);
       printf ("end of vars\n\n");
 #endif
     }
@@ -260,7 +293,14 @@ do_eval (int *noshow, node_u node)
       symbol_entry_s sa;
       node_string_s *lv = node_string (node);
       sym_lbl (&sa) = node_string_value (lv);
-      void *found = tfind (&sa, &global_root, var_compare);
+      void *found = NULL;
+      if (symtab_stack_next > 0) {
+	for (int i = symtab_stack_next; !found && i > 0; i--) {
+	  void *this_symtab = symtab_stack[i-1];
+	  found = tfind (&sa, &this_symtab, var_compare);
+	}
+      }
+      if (!found) found = tfind (&sa, &current_symtab, var_compare);
       if (found) {
 	symbol_entry_s *vp = *(symbol_entry_s **)found;
 	rc = sym_node (vp);
@@ -277,11 +317,11 @@ do_eval (int *noshow, node_u node)
   case TYPE_DYADIC:
     {
       node_dyadic_s *dyad = node_dyadic (node);
-      node_u ra = do_eval (NULL, node_dyadic_ra (dyad));
       sym_e sym = node_dyadic_op (dyad);
+      node_u ra = do_eval (NULL, node_dyadic_ra (dyad));
       node_u la = node_dyadic_la (dyad);
       if (sym != SYM_EQUAL || get_type (la) != TYPE_SYMBOL)
-	la = do_eval (NULL, la);
+	  la = do_eval (NULL, la);
       node_u modifier = node_dyadic_modifier (dyad);
       op_type_e op_type = node_dyadic_op_type (dyad);
 
@@ -514,7 +554,7 @@ do_eval (int *noshow, node_u node)
 }
 
 void
-print_node (node_u node)
+print_node (int indent, node_u node)
 {
   switch(get_type (node)) {
   case TYPE_CPX_VECTOR:
@@ -522,12 +562,12 @@ print_node (node_u node)
       node_cpx_vector_s *vs = node_cpx_vector (node);
       int cols = node_cpx_vector_cols (vs);
       int i;
-      fprintf (stdout, "[ ");
+      fprintf (stdout, "%*s[ ", indent, " ");
       for (i = 0; i < node_cpx_vector_next (vs); i++) {
 	fprintf (stdout, "%R ", &node_cpx_vector_data (vs)[i]);
 	if (((i + 1) % cols == 0) &&
 	    ((i + 1) <  node_cpx_vector_next (vs)))
-	  fprintf (stdout, "\n  ");
+	  fprintf (stdout, "%*s\n  ", indent+2, " ");
       }
       fprintf (stdout, "]\n");
     }
@@ -536,28 +576,45 @@ print_node (node_u node)
     {
       node_complex_s *vs = node_complex (node);
       gsl_complex vv = node_complex_value (vs);
-      fprintf (stdout, "%R\n", &vv);
+      fprintf (stdout, "%*s%R\n", indent, " ", &vv);
     }
     break;
   case TYPE_LITERAL:
     {
       node_string_s *ss = node_string (node);
       char *sv = node_string_value (ss);
-      fprintf (stdout, "%s\n", sv);
+      fprintf (stdout, "%*s%s\n", indent, " ", sv);
     }
     break;
   case TYPE_NULL:
-    fprintf (stdout, "''\n");
+    fprintf (stdout, "%*s''\n", indent, " ");
     break;
   case TYPE_LIST:
     {
       node_list_s *list = node_list (node);
+      fprintf (stdout, "%*slist %d elements\n", indent, " ",
+	       node_list_next (list));
       for (int i = 0; i < node_list_next (list); i++) 
-	print_node (node_list_list (list)[i]);
+	print_node (indent+2, node_list_list (list)[i]);
+    }
+    break;
+  case TYPE_DYADIC:
+    {
+      node_dyadic_s *dyad = node_dyadic (node);
+      sym_e sym = node_dyadic_op (dyad);
+      fprintf (stdout, "%*sdyadic sym = %d\n", indent, " ", sym);
+      fprintf (stdout, "%*sleft arg:\n", indent, " ");
+      print_node (indent+2, node_dyadic_la (dyad));
+      fprintf (stdout, "%*sright arg:\n", indent, " ");
+      print_node (indent+2, node_dyadic_ra (dyad));
     }
     break;
   case TYPE_SYMBOL:
-  case TYPE_DYADIC:
+    {
+      node_string_s *lv = node_string (node);
+      fprintf (stdout, "%*ssymbol %s\n", indent, " ", node_string_value (lv));
+    }
+    break;
   case TYPE_MONADIC:
     break;
   }
