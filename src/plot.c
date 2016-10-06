@@ -17,6 +17,7 @@
 #include "node.h"
 #include "eval.h"
 #include "printext.h"
+#include "rgb.h"
 
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
@@ -60,18 +61,24 @@ parseopts_set_bg_colour (node_u arg)
       }
     }
     break;
+  case TYPE_LITERAL:
+    {
+      int red, green, blue;
+      node_string_s *ls = node_string (arg);
+      char *lv = node_string_value (ls);
+      int rc = lookup_colour (lv, &red, &green, &blue);
+      if (rc) {
+	plot_options_bg_colour_red (&plot_options)   = (PLINT)red;
+	plot_options_bg_colour_green (&plot_options) = (PLINT)green;
+	plot_options_bg_colour_blue (&plot_options)  = (PLINT)blue;
+      }
+      //printf ("colour = %s %d %d %d %d\n", lv, rc, red, green, blue);
+    }
+    break;
   default:
     // fixme can't parse it
     break;
   }
-#if 0
-  PLINT red = -1, green = -1, blue = -1;
-  if (parse_colour (arg, &red, &green, &blue, COLOUR_BG)) {
-    plot_options_bg_colour_red (plot_options)   = red;
-    plot_options_bg_colour_green (plot_options) = green;
-    plot_options_bg_colour_blue (plot_options)  = blue;
-  }
-#endif
 }
 
 static const ENTRY plotopts[] = {
