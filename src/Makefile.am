@@ -9,6 +9,7 @@ clc_SOURCES = main.c \
               vector.c vector.h \
               memory.c memory.h \
               rgb.c rgb.h \
+              set.c set.h \
               plot.c plot.h
 
 DISTCLEANFILES = .deps/*.P

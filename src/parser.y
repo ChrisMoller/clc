@@ -10,6 +10,7 @@
 #include "memory.h"
 #include "printext.h"
 #include "eval.h"
+#include "set.h"
 
 #define YYDEBUG 1
 
@@ -28,6 +29,7 @@ void yyerror (char const *);
   sym_e	      d;
 }
 
+%token	   SET
 %token	   EOP
 %token	   EOS
 %token <v> NUMBER
@@ -69,6 +71,8 @@ stmt	:	/* null */
             free_node ($2);
             if ($3) YYABORT;
           }
+	| SET SYMBOL  phrase eof { do_set ($2, $3); }
+	| SET CLC_BIF phrase eof { do_set_bif ($2, $3); }
 	;
 
 eof     : EOS { $$ = 1; } 

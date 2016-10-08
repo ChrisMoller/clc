@@ -89,6 +89,7 @@ sin             { yylval.d = SYM_SIN;    return BIF; }
 cos             { yylval.d = SYM_COS;    return BIF; }
 tan             { yylval.d = SYM_TAN;    return BIF; }
 log             { yylval.d = SYM_LOG;    return BIF; }
+set             { return SET; }
 ln              { yylval.d = SYM_LN;     return BIF; }
 \<\>            { yylval.d = SYM_LTGT;   return RIGHT_CLC_DYADIC; }
 \>\<            { yylval.d = SYM_GTLT;   return RIGHT_CLC_DYADIC; }
