@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <values.h>
 
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
@@ -251,6 +252,10 @@ clc_plot (node_u modifier, node_u arg)
     return &curves[curves_next++];
   }
 
+  double min_x = MAXDOUBLE;
+  double max_x = MINDOUBLE;
+  double min_y = MAXDOUBLE;
+  double max_y = MINDOUBLE;
   if (get_type (arg) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *ls = node_cpx_vector (arg);
     int lrows = node_cpx_vector_rows (ls);
@@ -263,9 +268,14 @@ clc_plot (node_u modifier, node_u arg)
 	curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
 	curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
 	for (int i = 0; i < lcols; i++) {
-	  curves_xvec (curve)[i] = (PLFLT)i;
-	  curves_yvec (curve)[i] =
-	    (PLFLT)GSL_REAL (node_cpx_vector_data (ls)[i]);
+	  double xv = (double)i;
+	  double yv = GSL_REAL (node_cpx_vector_data (ls)[i]);
+	  if (min_x > xv) min_x = xv;
+	  if (max_x < xv) max_x = xv;
+	  if (min_y > yv) min_y = yv;
+	  if (max_y < yv) max_y = yv;
+	  curves_xvec (curve)[i] = (PLFLT)xv;
+	  curves_yvec (curve)[i] = (PLFLT)yv;
 	}
       }
     }
@@ -275,16 +285,20 @@ clc_plot (node_u modifier, node_u arg)
       if (lcols > 1) {
 	if (plot_options_mode_xy (&plot_options)) {
 	  int r, off;
-	  for (r = 1, off = 0; r < lrows; r++) {
+	  for (r = 1, off = lcols; r < lrows; r++) {
 	    curves_s *curve = create_curve ();
 	    curves_count (curve) = lcols;
 	    curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
 	    curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
 	    for (int i = 0; i < lcols; i++, off++) {
-	      curves_xvec (curve)[off] = 
-		(PLFLT)GSL_REAL (node_cpx_vector_data (ls)[i]);
-	      curves_yvec (curve)[off] =
-		(PLFLT)GSL_REAL (node_cpx_vector_data (ls)[off]);
+	      double xv = GSL_REAL (node_cpx_vector_data (ls)[i]);
+	      double yv = GSL_REAL (node_cpx_vector_data (ls)[off]);
+	      if (min_x > xv) min_x = xv;
+	      if (max_x < xv) max_x = xv;
+	      if (min_y > yv) min_y = yv;
+	      if (max_y < yv) max_y = yv;
+	      curves_xvec (curve)[i] = (PLFLT)xv;
+	      curves_yvec (curve)[i] = (PLFLT)yv;
 	    }
 	  }
 	}
@@ -296,20 +310,16 @@ clc_plot (node_u modifier, node_u arg)
 	    curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
 	    curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
 	    for (int i = 0; i < lcols; i++, off++) {
-	      curves_xvec (curve)[off] = (PLFLT)i;
-	      curves_yvec (curve)[off] =
-		(PLFLT)GSL_REAL (node_cpx_vector_data (ls)[off]);
+	      double xv = (double)i;
+	      double yv = GSL_REAL (node_cpx_vector_data (ls)[off]);
+	      if (min_x > xv) min_x = xv;
+	      if (max_x < xv) max_x = xv;
+	      if (min_y > yv) min_y = yv;
+	      if (max_y < yv) max_y = yv;
+	      curves_xvec (curve)[i] = (PLFLT)xv;
+	      curves_yvec (curve)[i] = (PLFLT)yv;
 	    }
 	  }
-	}
-	curves_s *curve = create_curve ();
-	curves_count (curve) = lcols;
-	curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
-	curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
-	for (int i = 0; i < lcols; i++) {
-	  curves_xvec (curve) [i] = (plot_options_mode_xy (&plot_options)) ?
-	    (PLFLT)GSL_REAL (node_cpx_vector_data (ls)[i]) :
-	    (PLFLT)i;
 	}
       }
     }
@@ -319,7 +329,8 @@ clc_plot (node_u modifier, node_u arg)
   }
 
   //     xmin xmax ymin ymax
-  plenv (-1.0, 1.0, -1.0, 1.0, 0, 0);
+
+  plenv ((PLFLT)min_x, (PLFLT)max_x, (PLFLT)min_y, (PLFLT)max_y, 0, 0);
 
   for (int i = 0; i < curves_next; i++) {
     plline ((PLINT)curves_count (&curves[i]),
