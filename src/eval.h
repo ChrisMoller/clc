@@ -11,6 +11,7 @@ typedef struct {
 node_u  clc_assign (node_u modifier, node_u la, node_u ra);
 node_u  clc_range (node_u modifier, node_u la, node_u ra);
 node_u  clc_index (node_u modifier, node_u arg);
+node_u  clc_random (node_u modifier, node_u arg);
 node_u  clc_complex_real (node_u modifier, node_u arg);
 node_u  clc_complex_imag (node_u modifier, node_u arg);
 node_u  clc_complex_arg (node_u modifier, node_u arg);

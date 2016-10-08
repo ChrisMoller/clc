@@ -14,6 +14,8 @@
 	 2, 1, "divide", "invert"),
   ENTRY ("^", SYM_HAT,		gsl_complex_pow,	gsl_complex_exp,
 	 2, 1, "power", "exp"),
+  ENTRY ("?", SYM_QMARK,	NULL,			clc_random,
+	 2, 1, "NULL",  "magnitude"),
   ENTRY ("|", SYM_BAR,		NULL,			clc_complex_abs,
 	 2, 1, "NULL",  "magnitude"),
   ENTRY ("<", SYM_LT,		NULL,			clc_complex_arg,

@@ -2,6 +2,7 @@
 #include "../config.h"
 #endif
 #define _GNU_SOURCE
+#include <malloc.h>
 #include <math.h>
 #include <search.h>
 #include <stdio.h>
@@ -28,6 +29,7 @@ static node_type_s null_node = { TYPE_NULL };
 typedef struct {
   FILE 		*out_stream;
   PLINT		 bg_colour[3];
+  int		 mode_xy;
 } plot_options_s;
 #define plot_options_out_stream(p)	((p)->out_stream)
 #define plot_options_bg_colour(p)	((p)->bg_colour)
@@ -38,10 +40,12 @@ typedef struct {
 #define plot_options_bg_colour_red(p)	((p)->bg_colour[COLOUR_IDX_RED])
 #define plot_options_bg_colour_green(p)	((p)->bg_colour[COLOUR_IDX_GREEN])
 #define plot_options_bg_colour_blue(p)	((p)->bg_colour[COLOUR_IDX_BLUE])
+#define plot_options_mode_xy(p)		((p)->mode_xy)
 
 plot_options_s plot_options = {
   .out_stream = NULL,
   .bg_colour  = {0, 0, 0},
+  .mode_xy    = 0
 };
 
 static void
@@ -81,9 +85,16 @@ parseopts_set_bg_colour (node_u arg)
   }
 }
 
+static void
+parseopts_set_mode_xy (node_u arg)
+{
+  plot_options_mode_xy (&plot_options)  = 1;
+}
+
 static const ENTRY plotopts[] = {
   {"bgcolour",          parseopts_set_bg_colour},
   {"bgcolor",           parseopts_set_bg_colour},
+  {"xy",                parseopts_set_mode_xy},
 };
 static const int plotopts_len = sizeof(plotopts) / sizeof(ENTRY);
 static int commands_table_initialised = 0;
@@ -192,27 +203,113 @@ clc_plot (node_u modifier, node_u arg)
     twalk (get_current_symtab (), var_action);
   }
   if (get_type (rm) == TYPE_LIST) {
+    node_list_s *list   = node_list (rm);
+    for (int i = 0; i < node_list_next (list); i++) {
+      node_u ln = node_list_list (list)[i];
+      if (get_type (ln) == TYPE_LITERAL) {
+	node_string_s *ls = node_string (ln);
+	char *lv = node_string_value (ls);
+	printf ("str = %s\n", lv);
+      }
+    }
+  }
+  else if (get_type (rm) == TYPE_LITERAL) {
+    ENTRY look_for;
+    ENTRY *found;
+    node_string_s *ls = node_string (rm);
+    char *lv = node_string_value (ls);
+    found = NULL;
+    look_for.key = lv;
+    hsearch_r (look_for, FIND, &found, &commands_table);
+    if (found) {
+      void (*fcn)(node_u arg);
+      fcn = found->data;
+      if (fcn) (*fcn)(NULL_NODE);
+    }
   }
   
   init_plplot ();
 
-  PLFLT *xvec = NULL;
-  PLFLT *yvec = NULL;
-  int count = 0;
+  typedef struct {
+    PLFLT *xvec;
+    PLFLT *yvec;
+    int count;
+  } curves_s;
+#define curves_xvec(c)  ((c)->xvec)
+#define curves_yvec(c)  ((c)->yvec)
+#define curves_count(c) ((c)->count)
+  curves_s *curves = NULL;
+  int curves_next = 0;
+  int curves_max  = 0;
+#define CURVE_INCR 8
 
+  curves_s *create_curve () {
+    if (curves_max <= curves_next) {
+      curves_max += CURVE_INCR;
+      curves = realloc (curves, curves_max * sizeof(curves_s));
+    }
+    return &curves[curves_next++];
+  }
 
   if (get_type (arg) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *ls = node_cpx_vector (arg);
     int lrows = node_cpx_vector_rows (ls);
     int lcols = node_cpx_vector_cols (ls);
-    if (lrows == 0) {			// just a simple plot
+    if (lrows <= 1) {			// just a simple plot
+      // ./clc 'plot {bgcolour = "purple"} (sin(::{.2}30))'
       if (lcols > 1) {
-	count = lcols;
-	xvec = malloc (count * sizeof(PLFLT));
-	yvec = malloc (count * sizeof(PLFLT));
-	for (int i = 0; i < count; i++) {
-	  xvec [i] = (PLFLT)i;
-	  yvec [i] = (PLFLT)GSL_REAL (node_cpx_vector_data (ls)[i]);
+	curves_s *curve = create_curve ();
+	curves_count (curve) = lcols;
+	curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
+	curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
+	for (int i = 0; i < lcols; i++) {
+	  curves_xvec (curve)[i] = (PLFLT)i;
+	  curves_yvec (curve)[i] =
+	    (PLFLT)GSL_REAL (node_cpx_vector_data (ls)[i]);
+	}
+      }
+    }
+    else {
+      // ./clc 'plot ([2 30]<>(sin(::{.2}30)),(cos(::{.2}30)))'
+      // ./clc 'plot {"xy"} ([2 30]<>(sin(::{.2}30)),(cos(::{.2}30)))'
+      if (lcols > 1) {
+	if (plot_options_mode_xy (&plot_options)) {
+	  int r, off;
+	  for (r = 1, off = 0; r < lrows; r++) {
+	    curves_s *curve = create_curve ();
+	    curves_count (curve) = lcols;
+	    curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
+	    curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
+	    for (int i = 0; i < lcols; i++, off++) {
+	      curves_xvec (curve)[off] = 
+		(PLFLT)GSL_REAL (node_cpx_vector_data (ls)[i]);
+	      curves_yvec (curve)[off] =
+		(PLFLT)GSL_REAL (node_cpx_vector_data (ls)[off]);
+	    }
+	  }
+	}
+	else {
+	  int r, off;
+	  for (r = 0, off = 0; r < lrows; r++) {
+	    curves_s *curve = create_curve ();
+	    curves_count (curve) = lcols;
+	    curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
+	    curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
+	    for (int i = 0; i < lcols; i++, off++) {
+	      curves_xvec (curve)[off] = (PLFLT)i;
+	      curves_yvec (curve)[off] =
+		(PLFLT)GSL_REAL (node_cpx_vector_data (ls)[off]);
+	    }
+	  }
+	}
+	curves_s *curve = create_curve ();
+	curves_count (curve) = lcols;
+	curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
+	curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
+	for (int i = 0; i < lcols; i++) {
+	  curves_xvec (curve) [i] = (plot_options_mode_xy (&plot_options)) ?
+	    (PLFLT)GSL_REAL (node_cpx_vector_data (ls)[i]) :
+	    (PLFLT)i;
 	}
       }
     }
@@ -222,9 +319,16 @@ clc_plot (node_u modifier, node_u arg)
   }
 
   //     xmin xmax ymin ymax
-  plenv (0.0, 30.0, -1.0, 1.0, 0, 0);
+  plenv (-1.0, 1.0, -1.0, 1.0, 0, 0);
 
-  plline ((PLINT)count, xvec, yvec);
+  for (int i = 0; i < curves_next; i++) {
+    plline ((PLINT)curves_count (&curves[i]),
+	    curves_xvec (&curves[i]),
+	    curves_yvec (&curves[i]));
+    free (curves_xvec (&curves[i]));
+    free (curves_yvec (&curves[i]));
+  }
+  curves_next = 0;
   plend ();
 
   plot_options_out_stream (&plot_options) = NULL;
@@ -232,3 +336,5 @@ clc_plot (node_u modifier, node_u arg)
   pop_symtab ();
   return rc;
 }
+
+// '[3 8]<>((sin(::{.2}8)), (cos(::{.2}8)), (8<>.6))'

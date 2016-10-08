@@ -95,6 +95,7 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 \:\:            { yylval.d = SYM_COLCOL; return RIGHT_CLC_DYADIC; }
 \/\+            { yylval.d = SYM_SLASHPLUS; return RIGHT_CLC_DYADIC; }
 \/\*            { yylval.d = SYM_SLASHSTAR; return RIGHT_CLC_DYADIC; }
+\@\@            { printf ("start comment\n"); BEGIN (COMMENT); }
 \+              { yylval.d = SYM_PLUS;   return RIGHT_DYADIC; }
 \-              { yylval.d = SYM_MINUS;  return RIGHT_DYADIC; }
 \*              { yylval.d = SYM_STAR;   return RIGHT_DYADIC; }
@@ -104,6 +105,7 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 \|              { yylval.d = SYM_BAR;    return RIGHT_CLC_DYADIC; }
 \,		{ yylval.d = SYM_COMMA;  return LEFT_CLC_DYADIC; }
 \=		{ yylval.d = SYM_EQUAL;  return RIGHT_CLC_DYADIC; }
+\?		{ yylval.d = SYM_QMARK;  return RIGHT_CLC_DYADIC; }
 
 \(		return LEFT_PAREN;
 \)		return RIGHT_PAREN;

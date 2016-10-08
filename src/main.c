@@ -7,9 +7,11 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
+#include <gsl/gsl_errno.h>
 
 #include "printext.h"
 #include "node.h"
@@ -92,6 +94,13 @@ then exit\n");
       return 0;
     }
   }
+
+  {
+    struct timespec tp;
+    clock_gettime (CLOCK_REALTIME, &tp);
+    srand48 ((long int)tp.tv_nsec);
+  }
+  gsl_set_error_handler_off ();
   
   print_init ();		// sets up printf extensions
 

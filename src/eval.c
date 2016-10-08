@@ -2,6 +2,7 @@
 #include "../config.h"
 #endif
 #define _GNU_SOURCE
+#include <alloca.h>
 #include <math.h>
 #include <search.h>
 #include <stdio.h>
@@ -128,6 +129,73 @@ do_range (node_u modifier, node_u la, node_u ra)
       }
     }
   }
+  return rc;
+}
+
+node_u
+clc_random (node_u modifier, node_u ra)
+{
+  node_u rc = NULL_NODE;
+  node_u rn = do_eval (NULL, ra);
+  node_u rm = do_eval (NULL, modifier);
+  enum {RT_SEQ, RT_IND} rt = RT_IND;
+
+  if (get_type (rm) == TYPE_LITERAL) {
+    node_string_s *sm = node_string (rm);
+    char *vm = node_string_value (sm);
+    if (vm && (*vm == 's' || *vm == 'S')) rt = RT_SEQ;
+  }
+
+  switch(get_type (rn)) {
+  case TYPE_COMPLEX:
+    {
+      node_complex_s *rn = node_complex (ra);
+      gsl_complex scale = node_complex_value (rn);
+      double rr = drand48 () * GSL_REAL (scale);
+      double ri = drand48 () * GSL_IMAG (scale);
+      gsl_complex rv = gsl_complex_rect (rr, ri);
+      rc = create_complex_node (rv);
+    }
+    break;
+  case TYPE_CPX_VECTOR:	// rands within given ranges or random sequence
+    {
+      node_cpx_vector_s *rs = node_cpx_vector (ra);
+      rc = create_complex_vector_node ();
+      node_cpx_vector_s *vs = node_cpx_vector (rc);
+      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+	node_cpx_vector_next (rs);
+      node_cpx_vector_rows (vs) = node_cpx_vector_rows (rs);
+      node_cpx_vector_cols (vs) = node_cpx_vector_cols (rs);
+      node_cpx_vector_data (vs) =
+	malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+      int len = node_cpx_vector_next (rs);
+      if (rt == RT_SEQ) {			// randomise sequence
+	int *indices = alloca ((len + 1) * sizeof(int));
+      
+	for (int i = 0; i < len; i++) indices[i] = i;
+	for (int i = 0; len > 0; len --, i++) {
+	  long ix = (long) ((double)len * drand48 ());
+	  node_cpx_vector_data (vs)[i] = node_cpx_vector_data (rs)[indices[ix]];
+	  if (len > 1)
+	    memmove (&indices[ix], &indices[ix + 1], (len - 1) * sizeof(int));
+	}
+      }
+      else {					// create vec of randoms
+	for (int i = 0; i < len; i++) {
+	  gsl_complex scale = node_cpx_vector_data (rs)[i];
+	  double rr = drand48 () * GSL_REAL (scale);
+	  double ri = drand48 () * GSL_IMAG (scale);
+	  node_cpx_vector_data (vs)[i] = gsl_complex_rect (rr, ri);
+	}
+      }
+    }
+    break;
+  case TYPE_LITERAL:	// random sequence
+    break;
+  default:
+    break;
+  }
+    
   return rc;
 }
 
