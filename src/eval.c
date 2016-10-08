@@ -3,6 +3,7 @@
 #endif
 #define _GNU_SOURCE
 #include <alloca.h>
+#include <ctype.h>
 #include <math.h>
 #include <search.h>
 #include <stdio.h>
@@ -160,37 +161,98 @@ clc_random (node_u modifier, node_u ra)
   case TYPE_CPX_VECTOR:	// rands within given ranges or random sequence
     {
       node_cpx_vector_s *rs = node_cpx_vector (ra);
-      rc = create_complex_vector_node ();
-      node_cpx_vector_s *vs = node_cpx_vector (rc);
-      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
-	node_cpx_vector_next (rs);
-      node_cpx_vector_rows (vs) = node_cpx_vector_rows (rs);
-      node_cpx_vector_cols (vs) = node_cpx_vector_cols (rs);
-      node_cpx_vector_data (vs) =
-	malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
       int len = node_cpx_vector_next (rs);
-      if (rt == RT_SEQ) {			// randomise sequence
-	int *indices = alloca ((len + 1) * sizeof(int));
+      if (len > 0) {
+	rc = create_complex_vector_node ();
+	node_cpx_vector_s *vs = node_cpx_vector (rc);
+	node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+	  node_cpx_vector_next (rs);
+	node_cpx_vector_rows (vs) = node_cpx_vector_rows (rs);
+	node_cpx_vector_cols (vs) = node_cpx_vector_cols (rs);
+	node_cpx_vector_data (vs) =
+	  malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+	if (rt == RT_SEQ) {			// randomise sequence
+	  int *indices = alloca ((len + 1) * sizeof(int));
       
-	for (int i = 0; i < len; i++) indices[i] = i;
-	for (int i = 0; len > 0; len --, i++) {
-	  long ix = (long) ((double)len * drand48 ());
-	  node_cpx_vector_data (vs)[i] = node_cpx_vector_data (rs)[indices[ix]];
-	  if (len > 1)
-	    memmove (&indices[ix], &indices[ix + 1], (len - 1) * sizeof(int));
+	  for (int i = 0; i < len; i++) indices[i] = i;
+	  for (int i = 0; len > 0; len --, i++) {
+	    long ix = (long) ((double)len * drand48 ());
+	    node_cpx_vector_data (vs)[i] =
+	      node_cpx_vector_data (rs)[indices[ix]];
+	    if (len > 1)
+	      memmove (&indices[ix], &indices[ix + 1], (len - 1) * sizeof(int));
+	  }
 	}
-      }
-      else {					// create vec of randoms
-	for (int i = 0; i < len; i++) {
-	  gsl_complex scale = node_cpx_vector_data (rs)[i];
-	  double rr = drand48 () * GSL_REAL (scale);
-	  double ri = drand48 () * GSL_IMAG (scale);
-	  node_cpx_vector_data (vs)[i] = gsl_complex_rect (rr, ri);
+	else {					// create vec of randoms
+	  for (int i = 0; i < len; i++) {
+	    gsl_complex scale = node_cpx_vector_data (rs)[i];
+	    double rr = drand48 () * GSL_REAL (scale);
+	    double ri = drand48 () * GSL_IMAG (scale);
+	    node_cpx_vector_data (vs)[i] = gsl_complex_rect (rr, ri);
+	  }
 	}
       }
     }
     break;
   case TYPE_LITERAL:	// random sequence
+    {
+      node_string_s *rm = node_string (ra);
+      char *rs = node_string_value (rm);
+      int len = strlen (rs);
+      if (len > 0) {
+	char *vs = alloca (1+len);
+	if (rt == RT_SEQ) {			// randomise sequence
+	  int *indices = alloca ((len + 1) * sizeof(int));
+	
+	  for (int i = 0; i < len; i++) indices[i] = i;
+	  for (int i = 0; len > 0; len --, i++) {
+	    long ix = (long) ((double)len * drand48 ());
+	    vs[i] = rs[indices[ix]];
+	    if (len > 1)
+	      memmove (&indices[ix], &indices[ix + 1], (len - 1) * sizeof(int));
+	  }
+	  vs[len] = 0;
+	  rc = create_string_node (TYPE_LITERAL, vs);
+	}
+	else {			// random string
+	  for (int i = 0; i < len; i++) {
+	    int chr = 0;
+	    switch(rs[i]) {
+	    case 'a':  // alpha
+	      do {chr = (int)(drand48 () * 255.0);} while(!isalpha (chr));
+	      break;
+	    case 'A':  // alphanumeric
+	      do {chr = (int)(drand48 () * 255.0);} while(!isalnum (chr));
+	      break;
+	    case 'i':  // ascii
+	      do {chr = (int)(drand48 () * 255.0);} while(!isascii (chr));
+	      break;
+	    case 'd':  // digit
+	      do {chr = (int)(drand48 () * 255.0);} while(!isdigit (chr));
+	      break;
+	    case 'g':  // graph
+	      do {chr = (int)(drand48 () * 255.0);} while(!isgraph (chr));
+	      break;
+	    case 'l':  // lower
+	      do {chr = (int)(drand48 () * 255.0);} while(!islower (chr));
+	      break;
+	    case 'p':  // print
+	      do {chr = (int)(drand48 () * 255.0);} while(!isprint (chr));
+	      break;
+	    case '!':  // punct
+	      do {chr = (int)(drand48 () * 255.0);} while(!ispunct (chr));
+	      break;
+	    case 'u':  // upper
+	      do {chr = (int)(drand48 () * 255.0);} while(!isupper (chr));
+	      break;
+	    }
+	    vs[i] = chr;
+	  }
+	  vs[len] = 0;
+	  rc = create_string_node (TYPE_LITERAL, vs);
+	}
+      }
+    }
     break;
   default:
     break;
