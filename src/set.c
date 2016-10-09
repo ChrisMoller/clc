@@ -12,15 +12,28 @@
 #include "node.h"
 #include "plot.h"
 
+static void
+set_seed (node_u arg)
+{
+  if (get_type (arg) == TYPE_COMPLEX) {
+    node_complex_s *ls = node_complex (arg);
+    long int val = (long int)GSL_REAL (node_complex_value (ls));
+    printf ("setting seed %ld\n", val);
+    srand48 (val);
+  }
+}
+
 static const ENTRY plotopts[] = {
   {"plotbgcolour",	parseopts_set_bg_colour},
   {"plotbgcolor",	parseopts_set_bg_colour},
   {"plotxy",		parseopts_set_mode_xy},
+  {"plotnoxy",		parseopts_set_mode_noxy},
   {"plotxlabel",	parseopts_set_xlabel},
   {"plotylabel",	parseopts_set_ylabel},
   {"plottoplabel",	parseopts_set_toplabel},
   {"plotwidth",		parseopts_set_width},
   {"plotheight",	parseopts_set_height},
+  {"seed",		set_seed},
 };
 static const int plotopts_len = sizeof(plotopts) / sizeof(ENTRY);
 static int commands_table_initialised = 0;
