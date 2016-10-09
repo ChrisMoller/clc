@@ -35,9 +35,9 @@ void yyerror (char const *);
 %token <v> NUMBER
 %token <s> SYMBOL
 %token <s> QSTRING
+%left  <d> LEFT_CLC_DYADIC
 %right <d> RIGHT_DYADIC
 %right <d> RIGHT_CLC_DYADIC
-%left <d>  LEFT_CLC_DYADIC
 %right <d> BIF
 %right <d> CLC_BIF
 %token     LEFT_PAREN
@@ -71,7 +71,7 @@ stmt	:	/* null */
             free_node ($2);
             if ($3) YYABORT;
           }
-	| SET SYMBOL  phrase eof { do_set ($2, $3); }
+	| SET SYMBOL phrase eof { do_set ($2, $3); }
 	| SET CLC_BIF phrase eof { do_set_bif ($2, $3); }
 	;
 

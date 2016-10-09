@@ -96,7 +96,7 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 \:\:            { yylval.d = SYM_COLCOL; return RIGHT_CLC_DYADIC; }
 \/\+            { yylval.d = SYM_SLASHPLUS; return RIGHT_CLC_DYADIC; }
 \/\*            { yylval.d = SYM_SLASHSTAR; return RIGHT_CLC_DYADIC; }
-\@\@            { printf ("start comment\n"); BEGIN (COMMENT); }
+\@\@            { BEGIN (COMMENT); }
 \+              { yylval.d = SYM_PLUS;   return RIGHT_DYADIC; }
 \-              { yylval.d = SYM_MINUS;  return RIGHT_DYADIC; }
 \*              { yylval.d = SYM_STAR;   return RIGHT_DYADIC; }

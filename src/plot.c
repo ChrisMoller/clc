@@ -21,6 +21,8 @@
 #include "printext.h"
 #include "rgb.h"
 
+#define MAX_PLOT_COLOURS 16
+
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
 	  
@@ -31,6 +33,11 @@ typedef struct {
   FILE 		*out_stream;
   PLINT		 bg_colour[3];
   int		 mode_xy;
+  char		*xlabel;
+  char		*ylabel;
+  char		*toplabel;
+  int		 width;
+  int		 height;
 } plot_options_s;
 #define plot_options_out_stream(p)	((p)->out_stream)
 #define plot_options_bg_colour(p)	((p)->bg_colour)
@@ -42,11 +49,19 @@ typedef struct {
 #define plot_options_bg_colour_green(p)	((p)->bg_colour[COLOUR_IDX_GREEN])
 #define plot_options_bg_colour_blue(p)	((p)->bg_colour[COLOUR_IDX_BLUE])
 #define plot_options_mode_xy(p)		((p)->mode_xy)
+#define plot_options_xlabel(p)		((p)->xlabel)
+#define plot_options_ylabel(p)		((p)->ylabel)
+#define plot_options_toplabel(p)	((p)->toplabel)
+#define plot_options_width(p)		((p)->width)
+#define plot_options_height(p)		((p)->height)
 
 plot_options_s plot_options = {
-  .out_stream = NULL,
-  .bg_colour  = {0, 0, 0},
-  .mode_xy    = 0
+  .out_stream	= NULL,
+  .bg_colour	= {0, 0, 0},
+  .mode_xy	= 0,
+  .xlabel	= NULL,
+  .ylabel	= NULL,
+  .toplabel	= NULL
 };
 
 static void
@@ -87,15 +102,76 @@ parseopts_set_bg_colour (node_u arg)
 }
 
 static void
+parseopts_set_xlabel (node_u arg)
+{
+  if (get_type (arg) == TYPE_LITERAL) {
+    node_string_s *ls = node_string (arg);
+    char *lv = node_string_value (ls);
+    if (plot_options_xlabel (&plot_options))
+      free (plot_options_xlabel (&plot_options));
+    plot_options_xlabel (&plot_options) = strdup (lv);
+  }
+}
+
+static void
+parseopts_set_ylabel (node_u arg)
+{
+  if (get_type (arg) == TYPE_LITERAL) {
+    node_string_s *ls = node_string (arg);
+    char *lv = node_string_value (ls);
+    if (plot_options_ylabel (&plot_options))
+      free (plot_options_ylabel (&plot_options));
+    plot_options_ylabel (&plot_options) = strdup (lv);
+  }
+}
+
+static void
+parseopts_set_toplabel (node_u arg)
+{
+  if (get_type (arg) == TYPE_LITERAL) {
+    node_string_s *ls = node_string (arg);
+    char *lv = node_string_value (ls);
+    if (plot_options_toplabel (&plot_options))
+      free (plot_options_toplabel (&plot_options));
+    plot_options_toplabel (&plot_options) = strdup (lv);
+  }
+}
+
+static void
+parseopts_set_width (node_u arg)
+{
+  if (get_type (arg) == TYPE_COMPLEX) {
+    node_complex_s *ls = node_complex (arg);
+    int val = (int)GSL_REAL (node_complex_value (ls));
+    plot_options_width (&plot_options) = val;
+  }
+}
+
+static void
+parseopts_set_height (node_u arg)
+{
+  if (get_type (arg) == TYPE_COMPLEX) {
+    node_complex_s *ls = node_complex (arg);
+    int val = (int)GSL_REAL (node_complex_value (ls));
+    plot_options_height (&plot_options) = val;
+  }
+}
+
+static void
 parseopts_set_mode_xy (node_u arg)
 {
   plot_options_mode_xy (&plot_options)  = 1;
 }
 
 static const ENTRY plotopts[] = {
-  {"bgcolour",          parseopts_set_bg_colour},
-  {"bgcolor",           parseopts_set_bg_colour},
-  {"xy",                parseopts_set_mode_xy},
+  {"bgcolour",	parseopts_set_bg_colour},
+  {"bgcolor",	parseopts_set_bg_colour},
+  {"xy",	parseopts_set_mode_xy},
+  {"xlabel",	parseopts_set_xlabel},
+  {"ylabel",	parseopts_set_ylabel},
+  {"toplabel",	parseopts_set_toplabel},
+  {"width",	parseopts_set_width},
+  {"height",	parseopts_set_height},
 };
 static const int plotopts_len = sizeof(plotopts) / sizeof(ENTRY);
 static int commands_table_initialised = 0;
@@ -141,7 +217,14 @@ init_plplot ()
 	    plot_options_bg_colour_blue (&plot_options));
 
   plsdev ("pngcairo");
-  plsetopt ("geometry", "300x300");
+  {
+    char *str;
+    asprintf (&str, "%dx%d",
+	      plot_options_width (&plot_options),
+	      plot_options_height (&plot_options));
+    plsetopt ("geometry", str);
+    free (str);
+  }
   plinit ();
 }
 
@@ -331,8 +414,12 @@ clc_plot (node_u modifier, node_u arg)
   //     xmin xmax ymin ymax
 
   plenv ((PLFLT)min_x, (PLFLT)max_x, (PLFLT)min_y, (PLFLT)max_y, 0, 0);
+  pllab (plot_options_xlabel (&plot_options),
+	 plot_options_ylabel (&plot_options),
+	 plot_options_toplabel (&plot_options));
 
   for (int i = 0; i < curves_next; i++) {
+    plcol0 ((PLINT)((i +1) % (MAX_PLOT_COLOURS - 1)));
     plline ((PLINT)curves_count (&curves[i]),
 	    curves_xvec (&curves[i]),
 	    curves_yvec (&curves[i]));
