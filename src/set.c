@@ -7,13 +7,55 @@
 #include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 
 #include "node.h"
+#include "plot.h"
+
+static const ENTRY plotopts[] = {
+  {"plotbgcolour",	parseopts_set_bg_colour},
+  {"plotbgcolor",	parseopts_set_bg_colour},
+  {"plotxy",		parseopts_set_mode_xy},
+  {"plotxlabel",	parseopts_set_xlabel},
+  {"plotylabel",	parseopts_set_ylabel},
+  {"plottoplabel",	parseopts_set_toplabel},
+  {"plotwidth",		parseopts_set_width},
+  {"plotheight",	parseopts_set_height},
+};
+static const int plotopts_len = sizeof(plotopts) / sizeof(ENTRY);
+static int commands_table_initialised = 0;
+static struct hsearch_data commands_table;
+
+static void
+handle_set (char *lv, node_u arg)
+{
+  ENTRY look_for;
+  ENTRY *found;
+
+  if (!commands_table_initialised) {
+    int i;
+    ENTRY *ret;
+    commands_table_initialised = 1;
+    bzero (&commands_table, sizeof (struct hsearch_data));
+    hcreate_r ((size_t)plotopts_len, &commands_table);
+    for (i = 0; i < plotopts_len; i++)
+      hsearch_r (plotopts[i], ENTER, &ret, &commands_table);
+  }
+
+  found = NULL;
+  look_for.key = lv;
+  hsearch_r (look_for, FIND, &found, &commands_table);
+  if (found) {
+    void (*fcn)(node_u arg);
+    fcn = found->data;
+    if (fcn) (*fcn)(arg);
+  }
+}
 
 void
-do_set (const char *kwd, node_u val)
+do_set (char *kwd, node_u val)
 {
-  printf ("setting %s\n", kwd);
+  handle_set (kwd, val);
 }
 
 void

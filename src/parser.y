@@ -35,18 +35,18 @@ void yyerror (char const *);
 %token <v> NUMBER
 %token <s> SYMBOL
 %token <s> QSTRING
-%left  <d> LEFT_CLC_DYADIC
+%left  <d> CATENATE
 %right <d> RIGHT_DYADIC
 %right <d> RIGHT_CLC_DYADIC
 %right <d> BIF
 %right <d> CLC_BIF
+%right     MONADIC
 %token     LEFT_PAREN
 %token     RIGHT_PAREN
 %token     LEFT_BRACKET
 %token     RIGHT_BRACKET
 %token     LEFT_BRACE
 %token     RIGHT_BRACE
-%token     RIGHT_ARROW
 %type  <n> phrase
 %type  <n> modifier
 %type  <n> vector
@@ -71,8 +71,8 @@ stmt	:	/* null */
             free_node ($2);
             if ($3) YYABORT;
           }
-	| SET SYMBOL phrase eof { do_set ($2, $3); }
-	| SET CLC_BIF phrase eof { do_set_bif ($2, $3); }
+	| stmt SET CLC_BIF phrase eof { do_set_bif ($3, $4); }
+	| stmt SET SYMBOL phrase eof { do_set ($3, $4); }
 	;
 
 eof     : EOS { $$ = 1; } 
@@ -82,19 +82,19 @@ eof     : EOS { $$ = 1; }
 phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 	| QSTRING { $$ = create_string_node (TYPE_LITERAL, $1); }
 	| NUMBER  { $$ = create_complex_node ($1); }
+	| phrase CATENATE modifier phrase
+		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
 	| phrase RIGHT_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3, $4); }
 	| phrase RIGHT_CLC_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
-	| phrase LEFT_CLC_DYADIC modifier phrase
-		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
-	| RIGHT_DYADIC modifier phrase
+	| RIGHT_DYADIC modifier phrase %prec MONADIC
 		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2, $3); }
-	| RIGHT_CLC_DYADIC modifier phrase
+	| RIGHT_CLC_DYADIC modifier phrase %prec MONADIC
 		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2, $3); }
-	| BIF modifier LEFT_PAREN phrase RIGHT_PAREN
+	| BIF modifier LEFT_PAREN phrase RIGHT_PAREN %prec MONADIC
 		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2, $4); }
-	| CLC_BIF modifier LEFT_PAREN phrase RIGHT_PAREN
+	| CLC_BIF modifier LEFT_PAREN phrase RIGHT_PAREN %prec MONADIC
 		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2, $4); }
 	| LEFT_PAREN phrase RIGHT_PAREN { $$ = $2; }
 	| LEFT_BRACKET vector RIGHT_BRACKET { $$ = $2; }

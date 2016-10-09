@@ -64,10 +64,9 @@ plot_options_s plot_options = {
   .toplabel	= NULL
 };
 
-static void
+void
 parseopts_set_bg_colour (node_u arg)
 {
-  printf ("in bg colour\n");
   switch(get_type (arg)) {
   case TYPE_CPX_VECTOR:
     {
@@ -101,7 +100,7 @@ parseopts_set_bg_colour (node_u arg)
   }
 }
 
-static void
+void
 parseopts_set_xlabel (node_u arg)
 {
   if (get_type (arg) == TYPE_LITERAL) {
@@ -113,7 +112,7 @@ parseopts_set_xlabel (node_u arg)
   }
 }
 
-static void
+void
 parseopts_set_ylabel (node_u arg)
 {
   if (get_type (arg) == TYPE_LITERAL) {
@@ -125,7 +124,7 @@ parseopts_set_ylabel (node_u arg)
   }
 }
 
-static void
+void
 parseopts_set_toplabel (node_u arg)
 {
   if (get_type (arg) == TYPE_LITERAL) {
@@ -137,7 +136,7 @@ parseopts_set_toplabel (node_u arg)
   }
 }
 
-static void
+void
 parseopts_set_width (node_u arg)
 {
   if (get_type (arg) == TYPE_COMPLEX) {
@@ -147,7 +146,7 @@ parseopts_set_width (node_u arg)
   }
 }
 
-static void
+void
 parseopts_set_height (node_u arg)
 {
   if (get_type (arg) == TYPE_COMPLEX) {
@@ -157,16 +156,23 @@ parseopts_set_height (node_u arg)
   }
 }
 
-static void
+void
 parseopts_set_mode_xy (node_u arg)
 {
   plot_options_mode_xy (&plot_options)  = 1;
+}
+
+void
+parseopts_set_mode_noxy (node_u arg)
+{
+  plot_options_mode_xy (&plot_options)  = 0;
 }
 
 static const ENTRY plotopts[] = {
   {"bgcolour",	parseopts_set_bg_colour},
   {"bgcolor",	parseopts_set_bg_colour},
   {"xy",	parseopts_set_mode_xy},
+  {"noxy",	parseopts_set_mode_noxy},
   {"xlabel",	parseopts_set_xlabel},
   {"ylabel",	parseopts_set_ylabel},
   {"toplabel",	parseopts_set_toplabel},
@@ -260,6 +266,21 @@ var_action (const void *nodep, const VISIT which, const int depth)
   }
 }
 
+static void
+handle_option (char *lv, node_u arg)
+{
+  ENTRY look_for;
+  ENTRY *found;
+  found = NULL;
+  look_for.key = lv;
+  hsearch_r (look_for, FIND, &found, &commands_table);
+  if (found) {
+    void (*fcn)(node_u arg);
+    fcn = found->data;
+    if (fcn) (*fcn)(arg);
+  }
+}
+
 node_u
 clc_plot (node_u modifier, node_u arg)
 {
@@ -293,23 +314,14 @@ clc_plot (node_u modifier, node_u arg)
       if (get_type (ln) == TYPE_LITERAL) {
 	node_string_s *ls = node_string (ln);
 	char *lv = node_string_value (ls);
-	printf ("str = %s\n", lv);
+	handle_option (lv, NULL_NODE);
       }
     }
   }
   else if (get_type (rm) == TYPE_LITERAL) {
-    ENTRY look_for;
-    ENTRY *found;
     node_string_s *ls = node_string (rm);
     char *lv = node_string_value (ls);
-    found = NULL;
-    look_for.key = lv;
-    hsearch_r (look_for, FIND, &found, &commands_table);
-    if (found) {
-      void (*fcn)(node_u arg);
-      fcn = found->data;
-      if (fcn) (*fcn)(NULL_NODE);
-    }
+    handle_option (lv, NULL_NODE);
   }
   
   init_plplot ();
