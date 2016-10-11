@@ -15,6 +15,8 @@ struct _node_complex_s;
 struct _node_dyadic_s;
 struct _node_mondic_s;
 struct _node_list_s;
+struct _node_function_s;
+struct _node_call_s;
 struct _node_cpx_vector_s;
 
 typedef struct _node_type_type		node_type_s;
@@ -23,6 +25,8 @@ typedef struct _node_complex_type	node_complex_s;
 typedef struct _node_dyadic_type	node_dyadic_s;
 typedef struct _node_monadic_type	node_monadic_s;
 typedef struct _node_list_type		node_list_s;
+typedef struct _node_function_type	node_function_s;
+typedef struct _node_call_type		node_call_s;
 typedef struct _node_cpx_vector_type	node_cpx_vector_s;
 
 
@@ -33,6 +37,8 @@ typedef union _node_u {
   node_dyadic_s		*d;
   node_monadic_s	*m;
   node_list_s		*l;
+  node_function_s	*f;
+  node_call_s		*e;
   node_cpx_vector_s	*v;
   void	                *vp;
   const void	        *vcp;
@@ -43,6 +49,8 @@ typedef union _node_u {
 #define node_dyadic(n)		((n).d)
 #define node_monadic(n)		((n).m)
 #define node_list(n)		((n).l)
+#define node_function(n)	((n).f)
+#define node_call(n)		((n).e)
 #define node_cpx_vector(n)	((n).v)
 #define node_void(n)		((n).vp)
 
@@ -54,6 +62,8 @@ typedef enum {
   TYPE_DYADIC,
   TYPE_MONADIC,
   TYPE_LIST,
+  TYPE_FUNCTION,
+  TYPE_CALL,
   TYPE_CPX_VECTOR,
 } type_e;
 
@@ -135,6 +145,28 @@ struct _node_list_type {
 #define node_list_max(n)	((n)->max)
 #define node_list_next(n)	((n)->next)
 #define NODE_LIST_INCR	16
+
+struct _node_function_type {
+  type_e	 type;
+  int		 refcnt;
+  node_u	 params;
+  node_u	 body;
+};
+#define node_function_type(n)	((n)->type)
+#define node_function_refcnt(n)	((n)->refcnt)
+#define node_function_params(n)	((n)->params)
+#define node_function_body(n)	((n)->body)
+
+struct _node_call_type {
+  type_e	 type;
+  int		 refcnt;
+  char		*fcn;
+  node_u	 args;
+};
+#define node_call_type(n)	((n)->type)
+#define node_call_refcnt(n)	((n)->refcnt)
+#define node_call_fcn(n)	((n)->fcn)
+#define node_call_args(n)	((n)->args)
 
 struct _node_cpx_vector_type {
   type_e	 type;

@@ -71,8 +71,9 @@ stmt	:	/* null */
             free_node ($2);
             if ($3) YYABORT;
           }
-	| stmt SET CLC_BIF phrase eof { do_set_bif ($3, $4); }
 	| stmt SET SYMBOL phrase eof { do_set ($3, $4); }
+	| stmt SYMBOL LEFT_PAREN phrase RIGHT_PAREN LEFT_BRACE phrase RIGHT_BRACE eof
+	        { create_function ($2, $4, $7); }
 	;
 
 eof     : EOS { $$ = 1; } 
@@ -98,6 +99,7 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2, $4); }
 	| LEFT_PAREN phrase RIGHT_PAREN { $$ = $2; }
 	| LEFT_BRACKET vector RIGHT_BRACKET { $$ = $2; }
+	| SYMBOL LEFT_PAREN phrase RIGHT_PAREN { $$ = create_call ($1, $3); }
 	;
 
 modifier : /* empty */ { $$ = NULL_NODE; }

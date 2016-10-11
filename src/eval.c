@@ -273,6 +273,15 @@ clc_range (node_u modifier, node_u la, node_u ra)
   return do_range (modifier, la, ra);
 }
 
+node_u
+clc_file (node_u modifier, node_u arg)
+{
+  node_u rc = NULL_NODE;
+  if (get_type (arg) == TYPE_LITERAL) {
+  }
+  return rc;
+}
+
 static int
 var_compare (const void *a, const void *b)
 {
@@ -306,6 +315,24 @@ var_action (const void *nodep, const VISIT which, const int depth)
 }
 #endif
 
+void
+do_assign (const char *name, node_u ra)
+{
+  symbol_entry_s *sa = malloc (sizeof(symbol_entry_s));
+  sym_lbl (sa) = strdup (name);
+  sym_node (sa) = ra;
+  node_incref (ra);
+  void *found = tfind (sa, &current_symtab, var_compare);
+  if (found) {
+    symbol_entry_s *vp = *(symbol_entry_s **)found;
+    node_decref (sym_node (vp));
+    free (sym_lbl (sa));
+    sym_node (vp) = ra;
+    node_incref (ra);
+  }
+  else tsearch (sa, &current_symtab, var_compare);
+}
+
 node_u
 clc_assign (node_u modifier, node_u la, node_u ra)
 {
@@ -317,19 +344,7 @@ clc_assign (node_u modifier, node_u la, node_u ra)
   case TYPE_SYMBOL:	// unquoted string
     {
       node_string_s *lv = node_string (la);
-      symbol_entry_s *sa = malloc (sizeof(symbol_entry_s));
-      sym_lbl (sa) = strdup (node_string_value (lv));
-      sym_node (sa) = ra;
-      node_incref (ra);
-      void *found = tfind (sa, &current_symtab, var_compare);
-      if (found) {
-	symbol_entry_s *vp = *(symbol_entry_s **)found;
-	node_decref (sym_node (vp));
-	free (sym_lbl (sa));
-	sym_node (vp) = ra;
-	node_incref (ra);
-      }
-      else tsearch (sa, &current_symtab, var_compare);
+      do_assign (node_string_value (lv), ra);
       rc = NULL_NODE;	// fixme this migh not be the right thing to do
 #if 0
       printf ("\nvars\n");
@@ -341,9 +356,11 @@ clc_assign (node_u modifier, node_u la, node_u ra)
   case TYPE_LITERAL:	// quoted string
   case TYPE_COMPLEX:
   case TYPE_LIST:
+  case TYPE_FUNCTION:
   case TYPE_CPX_VECTOR:
   case TYPE_DYADIC:
   case TYPE_MONADIC:
+  case TYPE_CALL:
     // err unassignable
     break;
   }
@@ -395,6 +412,27 @@ clc_complex_abs (node_u modifier, node_u iarg)
   return rc;
 }
 
+static node_u
+lookup_symbol (char *ls)
+{
+  node_u rc = NULL_NODE;
+  symbol_entry_s sa;
+  sym_lbl (&sa) = ls;
+  void *found = NULL;
+  if (symtab_stack_next > 0) {
+    for (int i = symtab_stack_next; !found && i > 0; i--) {
+      void *this_symtab = symtab_stack[i-1];
+      found = tfind (&sa, &this_symtab, var_compare);
+    }
+  }
+  if (!found) found = tfind (&sa, &current_symtab, var_compare);
+  if (found) {
+    symbol_entry_s *vp = *(symbol_entry_s **)found;
+    rc = sym_node (vp);
+  }
+  return rc;
+}
+
 node_u
 clc_complex_arg (node_u modifier, node_u iarg)
 {
@@ -418,11 +456,35 @@ do_eval (int *noshow, node_u node)
   switch(get_type (node)) {
   case TYPE_NULL:
     break;
+  case TYPE_CALL:
+    {
+      node_call_s *call = node_call (node);
+      char *fcn  = node_call_fcn (call);
+      //node_u args = node_call_args (call);
+      node_u body = lookup_symbol (fcn);
+      if (get_type (body) != TYPE_NULL) {
+	rc = do_eval (NULL, body);
+      }
+#if 0
+      push_symtab ();
+      do_eval (NULL, params);		// fixme -- doesn't do positionals
+      rc = do_eval (NULL, body);
+      pop_symtab ();
+#endif
+    }
+    break;
   case TYPE_SYMBOL:
     {
       symbol_entry_s sa;
       node_string_s *lv = node_string (node);
       sym_lbl (&sa) = node_string_value (lv);
+      node_u val = lookup_symbol (node_string_value (lv));
+      if (get_type (val) != TYPE_NULL && get_type (val) != TYPE_CALL) {
+	rc = val;
+      }
+      else rc = node;
+#if 0
+      lookup_symbol (char *ls)
       void *found = NULL;
       if (symtab_stack_next > 0) {
 	for (int i = symtab_stack_next; !found && i > 0; i--) {
@@ -436,11 +498,13 @@ do_eval (int *noshow, node_u node)
 	rc = sym_node (vp);
       }
       else rc = node;
+#endif
     }
     break;
   case TYPE_COMPLEX:
   case TYPE_LITERAL:
   case TYPE_LIST:
+  case TYPE_FUNCTION:
   case TYPE_CPX_VECTOR:
     rc = node;
     break;
@@ -746,6 +810,8 @@ print_node (int indent, node_u node)
     }
     break;
   case TYPE_MONADIC:
+  case TYPE_FUNCTION:
+  case TYPE_CALL:
     break;
   }
 }

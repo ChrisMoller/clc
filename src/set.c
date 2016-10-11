@@ -11,6 +11,7 @@
 
 #include "node.h"
 #include "plot.h"
+#include "eval.h"
 
 static void
 set_seed (node_u arg)
@@ -18,7 +19,6 @@ set_seed (node_u arg)
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *ls = node_complex (arg);
     long int val = (long int)GSL_REAL (node_complex_value (ls));
-    printf ("setting seed %ld\n", val);
     srand48 (val);
   }
 }
@@ -39,11 +39,12 @@ static const int plotopts_len = sizeof(plotopts) / sizeof(ENTRY);
 static int commands_table_initialised = 0;
 static struct hsearch_data commands_table;
 
-static void
-handle_set (char *lv, node_u arg)
+void
+do_set (char *lv, node_u argi)
 {
   ENTRY look_for;
   ENTRY *found;
+  node_u arg = do_eval (NULL, argi);
 
   if (!commands_table_initialised) {
     int i;
@@ -65,14 +66,4 @@ handle_set (char *lv, node_u arg)
   }
 }
 
-void
-do_set (char *kwd, node_u val)
-{
-  handle_set (kwd, val);
-}
 
-void
-do_set_bif (int kwd, node_u val)
-{
-  printf ("setting %d\n", kwd);
-}

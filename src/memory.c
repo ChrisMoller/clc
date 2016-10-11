@@ -12,6 +12,7 @@
 #include "node.h"
 #include "printext.h"
 #include "memory.h"
+#include "eval.h"
 
 static char *qbuffer      = NULL;
 static int   qbuffer_max  = 0;
@@ -232,6 +233,30 @@ create_monadic_node (sym_e op, op_type_e op_type,
 }
 
 void
+create_function (const char *name, node_u params, node_u body)
+{
+  node_function_s *node = malloc (sizeof(node_function_s));
+  node_function_type (node) = TYPE_FUNCTION;
+  node_function_refcnt (node) = 1;
+  node_function_params (node) = params;
+  node_incref (params);
+  node_function_body (node) = body;
+  node_incref (body);
+  do_assign (name, body);
+}
+
+node_u
+create_call (char *fcn, node_u args)
+{
+  node_call_s *node = malloc (sizeof(node_call_s));
+  node_call_type (node) = TYPE_CALL;
+  node_call_refcnt (node) = 0;
+  node_call_fcn (node) = fcn;
+  node_call_args (node) = args;
+  return (node_u)node;
+}
+
+void
 free_node (node_u node)
 {
   if (node_refcnt (node) > 0) return;
@@ -257,6 +282,16 @@ free_node (node_u node)
     break;
   case TYPE_SYMBOL:
     // fixme -- free referred val here then fall through
+    break;
+  case TYPE_CALL:
+    {
+      node_call_s *call = node_call (node);
+      char *fcn  = node_call_fcn (call);
+      node_u args = node_call_args (call);
+      if (fcn) free (fcn);
+      free_node (args);
+    }
+    break;
   case TYPE_LITERAL:
     {
       node_string_s *ss = node_string (node);
@@ -293,6 +328,9 @@ free_node (node_u node)
     }
     break;
   case TYPE_NULL:
+    break;
+  case TYPE_FUNCTION:
+    // fixme 
     break;
   }
 }

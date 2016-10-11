@@ -81,6 +81,7 @@ asin            { yylval.d = SYM_ASIN;   return BIF; }
 acos            { yylval.d = SYM_ACOS;   return BIF; }
 atan            { yylval.d = SYM_ATAN;   return BIF; }
 logb            { yylval.d = SYM_LOG;    return BIF; }
+file            { yylval.d = SYM_FILE;   return CLC_BIF; }
 real            { yylval.d = SYM_REAL;   return CLC_BIF; }
 imag            { yylval.d = SYM_IMAG;   return CLC_BIF; }
 sqrt            { yylval.d = SYM_SQRT;   return BIF; }

@@ -65,8 +65,9 @@ plot_options_s plot_options = {
 };
 
 void
-parseopts_set_bg_colour (node_u arg)
+parseopts_set_bg_colour (node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   switch(get_type (arg)) {
   case TYPE_CPX_VECTOR:
     {
@@ -101,8 +102,9 @@ parseopts_set_bg_colour (node_u arg)
 }
 
 void
-parseopts_set_xlabel (node_u arg)
+parseopts_set_xlabel (node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   if (get_type (arg) == TYPE_LITERAL) {
     node_string_s *ls = node_string (arg);
     char *lv = node_string_value (ls);
@@ -113,8 +115,9 @@ parseopts_set_xlabel (node_u arg)
 }
 
 void
-parseopts_set_ylabel (node_u arg)
+parseopts_set_ylabel (node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   if (get_type (arg) == TYPE_LITERAL) {
     node_string_s *ls = node_string (arg);
     char *lv = node_string_value (ls);
@@ -125,8 +128,9 @@ parseopts_set_ylabel (node_u arg)
 }
 
 void
-parseopts_set_toplabel (node_u arg)
+parseopts_set_toplabel (node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   if (get_type (arg) == TYPE_LITERAL) {
     node_string_s *ls = node_string (arg);
     char *lv = node_string_value (ls);
@@ -137,8 +141,9 @@ parseopts_set_toplabel (node_u arg)
 }
 
 void
-parseopts_set_width (node_u arg)
+parseopts_set_width (node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *ls = node_complex (arg);
     int val = (int)GSL_REAL (node_complex_value (ls));
@@ -147,8 +152,9 @@ parseopts_set_width (node_u arg)
 }
 
 void
-parseopts_set_height (node_u arg)
+parseopts_set_height (node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *ls = node_complex (arg);
     int val = (int)GSL_REAL (node_complex_value (ls));
@@ -157,13 +163,13 @@ parseopts_set_height (node_u arg)
 }
 
 void
-parseopts_set_mode_xy (node_u arg)
+parseopts_set_mode_xy (node_u argi)
 {
   plot_options_mode_xy (&plot_options)  = 1;
 }
 
 void
-parseopts_set_mode_noxy (node_u arg)
+parseopts_set_mode_noxy (node_u argi)
 {
   plot_options_mode_xy (&plot_options)  = 0;
 }
@@ -282,9 +288,10 @@ handle_option (char *lv, node_u arg)
 }
 
 node_u
-clc_plot (node_u modifier, node_u arg)
+clc_plot (node_u modifier, node_u argi)
 {
   node_u rc = NULL_NODE;
+  node_u arg = do_eval (NULL, argi);
 
   if (!commands_table_initialised) {
     int i;
