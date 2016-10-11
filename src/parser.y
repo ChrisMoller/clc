@@ -74,6 +74,8 @@ stmt	:	/* null */
 	| stmt SET SYMBOL phrase eof { do_set ($3, $4); }
 	| stmt SYMBOL LEFT_PAREN phrase RIGHT_PAREN LEFT_BRACE phrase RIGHT_BRACE eof
 	        { create_function ($2, $4, $7); }
+	| stmt SYMBOL LEFT_PAREN RIGHT_PAREN LEFT_BRACE phrase RIGHT_BRACE eof
+	        { create_function ($2, NULL_NODE, $6); }
 	;
 
 eof     : EOS { $$ = 1; } 
