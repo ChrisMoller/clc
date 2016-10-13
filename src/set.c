@@ -33,6 +33,12 @@ static const ENTRY plotopts[] = {
   {"plottoplabel",	parseopts_set_toplabel},
   {"plotwidth",		parseopts_set_width},
   {"plotheight",	parseopts_set_height},
+  {"plotdefault",	parseopts_set_default},
+  {"plotgrid",		parseopts_set_grid},
+  {"plotlogx",		parseopts_set_logx},
+  {"plotlinearxx",	parseopts_set_linearx},
+  {"plotlogy",		parseopts_set_logy},
+  {"plotlinearxy",	parseopts_set_lineary},
   {"seed",		set_seed},
 };
 static const int plotopts_len = sizeof(plotopts) / sizeof(ENTRY);

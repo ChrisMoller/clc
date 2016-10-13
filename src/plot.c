@@ -38,6 +38,7 @@ typedef struct {
   char		*toplabel;
   int		 width;
   int		 height;
+  PLINT		 axes;
 } plot_options_s;
 #define plot_options_out_stream(p)	((p)->out_stream)
 #define plot_options_bg_colour(p)	((p)->bg_colour)
@@ -54,6 +55,7 @@ typedef struct {
 #define plot_options_toplabel(p)	((p)->toplabel)
 #define plot_options_width(p)		((p)->width)
 #define plot_options_height(p)		((p)->height)
+#define plot_options_axes(p)		((p)->axes)
 
 plot_options_s plot_options = {
   .out_stream	= NULL,
@@ -174,6 +176,68 @@ parseopts_set_mode_noxy (node_u argi)
   plot_options_mode_xy (&plot_options)  = 0;
 }
 
+void
+parseopts_set_nogrid (node_u argi)
+{
+  plot_options_axes (&plot_options)  = -2;
+}
+
+void
+parseopts_set_default (node_u argi)
+{
+  plot_options_axes (&plot_options)  = 0;
+}
+
+void
+parseopts_set_grid (node_u argi)
+{
+  if (plot_options_axes (&plot_options) < 0)
+    plot_options_axes (&plot_options) = 0;
+  plot_options_axes (&plot_options) += 3;
+}
+
+void
+parseopts_set_logx (node_u argi)
+{
+  if (plot_options_axes (&plot_options) < 0)
+    plot_options_axes (&plot_options) = 0;
+  if (plot_options_axes (&plot_options) < 10)
+    plot_options_axes (&plot_options) += 10;
+}
+
+void
+parseopts_set_linearx (node_u argi)
+{
+  if (plot_options_axes (&plot_options) < 0)
+    plot_options_axes (&plot_options) = 0;
+  if ((plot_options_axes (&plot_options) >= 10 &&
+       plot_options_axes (&plot_options) <= 13) ||
+      (plot_options_axes (&plot_options) >= 30 &&
+       plot_options_axes (&plot_options) <= 33))
+    plot_options_axes (&plot_options) -= 10;
+}
+
+void
+parseopts_set_logy (node_u argi)
+{
+  if (plot_options_axes (&plot_options) < 0)
+    plot_options_axes (&plot_options) = 0;
+  if (plot_options_axes (&plot_options) < 20)
+    plot_options_axes (&plot_options) += 20;
+}
+
+void
+parseopts_set_lineary (node_u argi)
+{
+  if (plot_options_axes (&plot_options) < 0)
+    plot_options_axes (&plot_options) = 0;
+  if ((plot_options_axes (&plot_options) >= 20 &&
+       plot_options_axes (&plot_options) <= 23) ||
+      (plot_options_axes (&plot_options) >= 30 &&
+       plot_options_axes (&plot_options) <= 33))
+    plot_options_axes (&plot_options) -= 20;
+}
+
 static const ENTRY plotopts[] = {
   {"bgcolour",	parseopts_set_bg_colour},
   {"bgcolor",	parseopts_set_bg_colour},
@@ -184,6 +248,12 @@ static const ENTRY plotopts[] = {
   {"toplabel",	parseopts_set_toplabel},
   {"width",	parseopts_set_width},
   {"height",	parseopts_set_height},
+  {"default",	parseopts_set_default},
+  {"grid",	parseopts_set_grid},
+  {"logx",	parseopts_set_logx},
+  {"linearxx",	parseopts_set_linearx},
+  {"logy",	parseopts_set_logy},
+  {"linearxy",	parseopts_set_lineary},
 };
 static const int plotopts_len = sizeof(plotopts) / sizeof(ENTRY);
 static int commands_table_initialised = 0;
@@ -432,7 +502,8 @@ clc_plot (node_u modifier, node_u argi)
 
   //     xmin xmax ymin ymax
 
-  plenv ((PLFLT)min_x, (PLFLT)max_x, (PLFLT)min_y, (PLFLT)max_y, 0, 0);
+  plenv ((PLFLT)min_x, (PLFLT)max_x, (PLFLT)min_y, (PLFLT)max_y, 0,
+	 plot_options_axes (&plot_options));
   pllab (plot_options_xlabel (&plot_options),
 	 plot_options_ylabel (&plot_options),
 	 plot_options_toplabel (&plot_options));
