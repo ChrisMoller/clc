@@ -13,8 +13,8 @@
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
 
-#include "printext.h"
 #include "node.h"
+#include "printext.h"
 #include "eval.h"
 #include "parser.h"
 

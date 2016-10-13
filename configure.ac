@@ -13,6 +13,13 @@ PKG_CHECK_MODULES([GSL], [gsl >= 1.15])
 AC_SUBST(GSL_CFLAGS)
 AC_SUBST(GSL_LIBS)
 
+PKG_CHECK_MODULES([LIBFFI], [libffi >= 3.0.13], ,
+  [echo "";
+  echo ">>>> You need to install the libffi and libffi-devel packages. <<<<";
+  echo ""; exit])
+AC_SUBST(LIBFFI_CFLAGS)
+AC_SUBST(LIBFFI_LIBS)
+
 PKG_CHECK_MODULES([PLPLOT], [plplotd >= 5.9.9], ,
   [echo "";
   echo ">>>> You need to install the plplot and plplot-devel packages. <<<<";

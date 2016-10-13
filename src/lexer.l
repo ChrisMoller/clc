@@ -10,8 +10,8 @@
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>    
 
-#include "printext.h"
 #include "node.h"
+#include "printext.h"
 #include "parser.h"
 #include "memory.h"
 
@@ -74,6 +74,7 @@ QSTR        [^\\\"]*
 asinh           { yylval.d = SYM_ASINH;  return BIF; }
 acosh           { yylval.d = SYM_ACOSH;  return BIF; }
 atanh           { yylval.d = SYM_ATANH;  return BIF; }
+print           { yylval.d = SYM_PRINT;  return CLC_BIF; }
 sinh            { yylval.d = SYM_SINH;   return BIF; }
 cosh            { yylval.d = SYM_COSH;   return BIF; }
 tanh            { yylval.d = SYM_TANH;   return BIF; }
@@ -133,6 +134,8 @@ e		{ yylval.v = gsl_complex_rect (M_E,  0.0); return NUMBER; }
 \"                      {BEGIN (QUOTED); clear_qbuffer (); }
 <QUOTED>{QSTR}          { cat_string_to_qbuffer (yytext); }
 <QUOTED>\\\"            { cat_char_to_qbuffer ('"'); }
+<QUOTED>\\n             { cat_char_to_qbuffer ('\n'); }
+<QUOTED>\\t             { cat_char_to_qbuffer ('\t'); }
 <QUOTED>\"              { BEGIN (INITIAL); 
                           yylval.s = strdup (get_qbuffer());
                           return QSTRING;}

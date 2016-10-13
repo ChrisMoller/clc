@@ -29,6 +29,7 @@ void yyerror (char const *);
   sym_e	      d;
 }
 
+%token	   PLOT
 %token	   SET
 %token	   EOP
 %token	   EOS

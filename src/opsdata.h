@@ -41,6 +41,8 @@
 	 2, 1, "matrix multiply",      "transpose"),
   ENTRY ("plot", SYM_PLOT,	NULL,			clc_plot,
 	 0, 1, NULL, "plot"),
+  ENTRY ("print", SYM_PRINT,	NULL,			clc_print,
+	 0, 1, NULL, "plot"),
   ENTRY ("file", SYM_FILE,	NULL,			clc_file,
 	 0, 1, NULL, "file"),
   ENTRY ("sqrt", SYM_SQRT,	NULL,			gsl_complex_sqrt,

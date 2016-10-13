@@ -19,9 +19,9 @@ AUTOMAKE_OPTIONS = dejagnu
 $(bin_PROGRAMS)-eval.o: eval.c opsdata.h printext.h node.h
 
 clc_CFLAGS = -std=c99 -Wall -Werror $(GSL_CFLAGS) $(PLPLOT_CFLAGS) \
-     $(HAVE_DISPLAY)
+     $(LIBFFI_CFLAGS) $(HAVE_DISPLAY)
 
-clc_LDFLAGS = $(GSL_LIBS) $(PLPLOT_LIBS) -lm -lreadline
+clc_LDFLAGS = $(GSL_LIBS) $(PLPLOT_LIBS) $(LIBFFI_LIBS) -lm -lreadline
 
 # -leak-check=full
 #  algrind --tool=memcheck --leak-check=full --leak-resolution=high -

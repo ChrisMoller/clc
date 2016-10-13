@@ -427,8 +427,12 @@ lookup_symbol (char *ls)
   }
   if (!found) found = tfind (&sa, &current_symtab, var_compare);
   if (found) {
+#if 0
+    rc = *found;
+#else
     symbol_entry_s *vp = *(symbol_entry_s **)found;
     rc = sym_node (vp);
+#endif
   }
   return rc;
 }
@@ -781,7 +785,7 @@ print_node (int indent, node_u node)
     }
     break;
   case TYPE_NULL:
-    fprintf (stdout, "%*s''\n", indent, " ");
+    //fprintf (stdout, "%*s''\n", indent, " ");
     break;
   case TYPE_LIST:
     {

@@ -5,5 +5,6 @@
 #pragma GCC diagnostic ignored "-Wformat-extra-args"
 
 void print_init ();
+node_u clc_print (node_u modifier, node_u argi);
 
 #endif  /* PRINTEXT_H */
