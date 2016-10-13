@@ -22,13 +22,16 @@ static node_type_s null_node = { TYPE_NULL };
 /***
     predefined:
 
-        h l L q j z t
+        h j l L q t z
 
-        d i o u x X e E f F g G a A c s C S p n
+        a A c C d e E f F g G i n o p s S u x X
 
     mine:
 
-        P R
+        P	user polar
+	R	user rectangular
+	Y	internal polar
+	Z	internal cartesian
 ***/
 
 static int

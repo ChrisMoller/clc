@@ -35,7 +35,7 @@
 	 2, 1, "catenate", "ravel"),
   ENTRY ("=", SYM_EQUAL,	clc_assign,		NULL,
 	 2, 1, "assign", NULL),
-  ENTRY ("<>", SYM_LTGT,	clc_reshape,		clc_shape,
+  ENTRY ("#", SYM_POUND,	clc_reshape,		clc_shape,
 	 2, 1, "reshape", "shape"),
   ENTRY ("><", SYM_GTLT,	clc_matrix_mul,		clc_transpose,
 	 2, 1, "matrix multiply",      "transpose"),

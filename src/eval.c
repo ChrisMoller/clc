@@ -762,7 +762,9 @@ print_node (int indent, node_u node)
       int i;
       fprintf (stdout, "%*s[ ", indent, " ");
       for (i = 0; i < node_cpx_vector_next (vs); i++) {
-	fprintf (stdout, "%R ", &node_cpx_vector_data (vs)[i]);
+	fprintf (stdout, "%R ",
+		 GSL_REAL (node_cpx_vector_data (vs)[i]),
+		 GSL_IMAG (node_cpx_vector_data (vs)[i]));
 	if (((i + 1) % cols == 0) &&
 	    ((i + 1) <  node_cpx_vector_next (vs)))
 	  fprintf (stdout, "%*s\n  ", indent+2, " ");
@@ -774,7 +776,7 @@ print_node (int indent, node_u node)
     {
       node_complex_s *vs = node_complex (node);
       gsl_complex vv = node_complex_value (vs);
-      fprintf (stdout, "%*s%R\n", indent, " ", &vv);
+      fprintf (stdout, "%*s%R\n", indent, " ", GSL_REAL (vv), GSL_IMAG (vv));
     }
     break;
   case TYPE_LITERAL:

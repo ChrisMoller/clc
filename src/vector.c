@@ -266,10 +266,15 @@ build_vec (int rows, node_cpx_vector_s *rs)
 {
   node_u rc = create_complex_vector_node ();
   node_cpx_vector_s *vs = node_cpx_vector (rc);
-  node_cpx_vector_next (vs) =
-    node_cpx_vector_max (vs) = rows;
   node_cpx_vector_rows (vs) = 0;
-  node_cpx_vector_cols (vs) = rows;
+  if (rows == 0) {
+    node_cpx_vector_next (vs) = node_cpx_vector_max (vs) = 
+      node_cpx_vector_cols (vs) = node_cpx_vector_next (rs);
+  }
+  else {
+    node_cpx_vector_cols (vs) = rows;
+    node_cpx_vector_next (vs) = node_cpx_vector_max (vs) = rows;
+  }
   node_cpx_vector_data (vs) =
     calloc (node_cpx_vector_next (vs), sizeof(gsl_complex));
   int ct = node_cpx_vector_next (rs);
