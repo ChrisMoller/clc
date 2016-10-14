@@ -238,6 +238,17 @@ parseopts_set_lineary (node_u argi)
     plot_options_axes (&plot_options) -= 20;
 }
 
+void
+parseopts_set_axes (node_u argi)
+{
+  node_u arg = do_eval (NULL, argi);
+  if (get_type (arg) == TYPE_COMPLEX) {
+    node_complex_s *ls = node_complex (arg);
+    int val = (int)GSL_REAL (node_complex_value (ls));
+    plot_options_axes (&plot_options) = val;
+  }
+}
+
 static const ENTRY plotopts[] = {
   {"bgcolour",	parseopts_set_bg_colour},
   {"bgcolor",	parseopts_set_bg_colour},
@@ -254,6 +265,7 @@ static const ENTRY plotopts[] = {
   {"linearxx",	parseopts_set_linearx},
   {"logy",	parseopts_set_logy},
   {"linearxy",	parseopts_set_lineary},
+  {"axes",	parseopts_set_axes},
 };
 static const int plotopts_len = sizeof(plotopts) / sizeof(ENTRY);
 static int commands_table_initialised = 0;

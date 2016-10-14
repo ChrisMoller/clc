@@ -16,5 +16,6 @@ void parseopts_set_logx (node_u arg);
 void parseopts_set_linearx (node_u arg);
 void parseopts_set_logy (node_u arg);
 void parseopts_set_lineary (node_u arg);
+void parseopts_set_axes (node_u arg);
 
 #endif  /* PLOT_H */

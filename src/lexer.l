@@ -94,6 +94,7 @@ log             { yylval.d = SYM_LOG;    return BIF; }
 set             { return SET; }
 ln              { yylval.d = SYM_LN;     return BIF; }
 \>\<            { yylval.d = SYM_GTLT;   return RIGHT_CLC_DYADIC; }
+\<\>            { yylval.d = SYM_LTGT;   return RIGHT_CLC_DYADIC; }
 \:\:            { yylval.d = SYM_COLCOL; return RIGHT_CLC_DYADIC; }
 \/\+            { yylval.d = SYM_SLASHPLUS; return RIGHT_CLC_DYADIC; }
 \/\*            { yylval.d = SYM_SLASHSTAR; return RIGHT_CLC_DYADIC; }

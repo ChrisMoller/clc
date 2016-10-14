@@ -149,6 +149,69 @@ clc_pi (node_u modifier, node_u arg)
 }
 
 node_u
+clc_extract (node_u modifier, node_u la, node_u ra)
+{
+  //* [a b c] <> 1 ==> b
+  //
+  //* [a b c] <> [2 0] ==> [c a], both rows = 0, rcols > 0, rcols <= lcols
+  //
+  // [ a b c
+  //   d e f     <> [1 -1] ==> [d e f]
+  //   g h i ]
+  //
+  // [ a b c
+  //   d e f     <> [-1 1] ==> [b e h]
+  //   g h i ]
+  //
+  // [ a b c
+  //   d e f     <> [1 1] ==> e
+  //   g h i ]
+  node_u rc = NULL_NODE;
+  switch(TYPE_GEN (get_type (la), get_type (ra))) {
+  case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_COMPLEX):
+    {
+      node_cpx_vector_s *ls = node_cpx_vector (la);
+      int lrows = node_cpx_vector_rows (ls);
+      if (lrows == 0 || lrows == 1) {
+	int lcols = node_cpx_vector_cols (ls);
+	node_complex_s *rs = node_complex (ra);
+	int rv = (int)GSL_REAL (node_complex_value (rs));
+	if (rv >= 0 && rv < lcols) {
+	  gsl_complex lv = node_cpx_vector_data (ls)[rv];
+	  rc = create_complex_node (lv);
+	}
+      }
+    }
+    break;
+  case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_CPX_VECTOR):
+    {
+      node_cpx_vector_s *ls = node_cpx_vector (la);
+      node_cpx_vector_s *rs = node_cpx_vector (ra);
+      int lrows = node_cpx_vector_rows (ls);
+      int rrows = node_cpx_vector_rows (rs);
+      int lcols = node_cpx_vector_cols (ls);
+      int rcols = node_cpx_vector_cols (rs);
+      if (lrows == 0 && rrows == 0 && lcols >= rcols) {
+	rc = create_complex_vector_node ();
+	node_cpx_vector_s *dest = node_cpx_vector (rc);
+	node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
+	  node_cpx_vector_cols (dest) = rcols;
+	node_cpx_vector_data (dest) =
+	  malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
+	for (int i = 0; i < rcols; i++) {
+	  int offset = (int)GSL_REAL (node_cpx_vector_data (rs)[i]);
+	  node_cpx_vector_data (dest)[i] = 
+	    (offset >= 0 && offset < lcols) ?
+	    node_cpx_vector_data (ls)[offset] : gsl_complex_rect (NAN, NAN);
+	}
+      }
+    }
+    break;
+  }
+  return rc;
+}
+
+node_u
 clc_matrix_mul (node_u modifier, node_u la, node_u ra)
 {
   node_u rc = NULL_NODE;

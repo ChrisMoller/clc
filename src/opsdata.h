@@ -39,6 +39,8 @@
 	 2, 1, "reshape", "shape"),
   ENTRY ("><", SYM_GTLT,	clc_matrix_mul,		clc_transpose,
 	 2, 1, "matrix multiply",      "transpose"),
+  ENTRY ("<>", SYM_LTGT,	clc_extract,		NULL,
+	 2, 1, "vector extract",      NULL),
   ENTRY ("plot", SYM_PLOT,	NULL,			clc_plot,
 	 0, 1, NULL, "plot"),
   ENTRY ("print", SYM_PRINT,	NULL,			clc_print,
