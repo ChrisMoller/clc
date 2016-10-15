@@ -23,8 +23,9 @@ static node_type_s null_node = { TYPE_NULL };
 #define src_offset(s,r,c)  (((r) * (s)) + c)
 
 node_u
-clc_sigma (node_u modifier, node_u arg)
+clc_sigma (node_u modifier, node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   node_u rc = arg;
   if (get_type (arg) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *ls = node_cpx_vector (arg);
@@ -86,8 +87,9 @@ clc_sigma (node_u modifier, node_u arg)
 }
 
 node_u
-clc_pi (node_u modifier, node_u arg)
+clc_pi (node_u modifier, node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   node_u rc = NULL_NODE;
   if (get_type (arg) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *ls = node_cpx_vector (arg);
@@ -149,8 +151,10 @@ clc_pi (node_u modifier, node_u arg)
 }
 
 node_u
-clc_extract (node_u modifier, node_u la, node_u ra)
+clc_extract (node_u modifier, node_u lai, node_u rai)
 {
+  node_u la = do_eval (NULL, lai);
+  node_u ra = do_eval (NULL, rai);
   //* [a b c] <> 1 ==> b
   //
   //* [a b c] <> [2 0] ==> [c a], both rows = 0, rcols > 0, rcols <= lcols
@@ -168,6 +172,8 @@ clc_extract (node_u modifier, node_u la, node_u ra)
   //   g h i ]
   node_u rc = NULL_NODE;
   switch(TYPE_GEN (get_type (la), get_type (ra))) {
+  case TYPE_GEN (TYPE_LITERAL, TYPE_COMPLEX):
+    break;
   case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_COMPLEX):
     {
       node_cpx_vector_s *ls = node_cpx_vector (la);
@@ -209,6 +215,7 @@ clc_extract (node_u modifier, node_u la, node_u ra)
       }
       else if (lrows > 0 && rcols == 2) {
 	if (GSL_REAL (node_cpx_vector_data (rs)[0]) < 0.0) {	// select col
+	  //./clc '([4 3 ]#::12)<>[~1 2]'
 	  int offset = (int)GSL_REAL (node_cpx_vector_data (rs)[1]);
 	  if (offset > 0 && offset <= lcols) {
 	    rc = create_complex_vector_node ();
@@ -224,6 +231,7 @@ clc_extract (node_u modifier, node_u la, node_u ra)
 	  }
 	}
 	else if (GSL_REAL (node_cpx_vector_data (rs)[1]) < 0.0) { // select row
+	  //./clc '([4 3 ]#::12)<>[2 ~1]'
 	  int offset = (int)GSL_REAL (node_cpx_vector_data (rs)[0]);
 	  if (offset > 0 && offset <= lrows) {
 	    rc = create_complex_vector_node ();
@@ -239,6 +247,7 @@ clc_extract (node_u modifier, node_u la, node_u ra)
 	  }
 	}
 	else {
+	  // ./clc '([4 3 ]#::12)<>[2 1]'
 	  int ir = (int)GSL_REAL (node_cpx_vector_data (rs)[0]);
 	  int ic = (int)GSL_REAL (node_cpx_vector_data (rs)[1]);
 	  if (ir >= 0 && ir < lrows &&
@@ -256,8 +265,10 @@ clc_extract (node_u modifier, node_u la, node_u ra)
 }
 
 node_u
-clc_matrix_mul (node_u modifier, node_u la, node_u ra)
+clc_matrix_mul (node_u modifier, node_u lai, node_u rai)
 {
+  node_u la = do_eval (NULL, lai);
+  node_u ra = do_eval (NULL, rai);
   node_u rc = NULL_NODE;
   if (get_type (la) == TYPE_CPX_VECTOR &&
       get_type (ra) == TYPE_CPX_VECTOR) {
@@ -321,8 +332,9 @@ clc_matrix_mul (node_u modifier, node_u la, node_u ra)
 }
 
 node_u
-clc_transpose (node_u modifier, node_u arg)
+clc_transpose (node_u modifier, node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   node_u rc = arg;
 
   if (get_type (arg) == TYPE_CPX_VECTOR) {
@@ -423,8 +435,10 @@ init_mtx (node_cpx_vector_s *ls)
 }
 
 node_u
-clc_reshape (node_u modifier, node_u ln, node_u rn)
+clc_reshape (node_u modifier, node_u lni, node_u rni)
 {
+  node_u ln = do_eval (NULL, lni);
+  node_u rn = do_eval (NULL, rni);
   node_u rc = NULL_NODE;
   node_u ra = rn;
   node_u la = ln;
@@ -540,8 +554,9 @@ clc_ravel (node_u modifier, node_u arg)
 }
 
 node_u
-clc_shape (node_u modifier, node_u arg)
+clc_shape (node_u modifier, node_u argi)
 {
+  node_u arg = do_eval (NULL, argi);
   node_u rc = NULL_NODE;
   
   node_u la = arg;
@@ -592,8 +607,10 @@ clc_shape (node_u modifier, node_u arg)
 }
 
 node_u
-clc_catenate (node_u modifier, node_u ln, node_u rn)
+clc_catenate (node_u modifier, node_u lni, node_u rni)
 {
+  node_u ln = do_eval (NULL, lni);
+  node_u rn = do_eval (NULL, rni);
   node_u rc = NULL_NODE;
   node_u ra = rn;
   node_u la = ln;
