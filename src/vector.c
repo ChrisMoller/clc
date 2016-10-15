@@ -239,6 +239,14 @@ clc_extract (node_u modifier, node_u la, node_u ra)
 	  }
 	}
 	else {
+	  int ir = (int)GSL_REAL (node_cpx_vector_data (rs)[0]);
+	  int ic = (int)GSL_REAL (node_cpx_vector_data (rs)[1]);
+	  if (ir >= 0 && ir < lrows &&
+	      ic >= 0 && ic < lcols) {
+	    gsl_complex vv =
+	      node_cpx_vector_data (ls)[ex_dest_offset (ir, ic)];
+	    rc = create_complex_node (0, vv);
+	  }
 	}
       }
     }
