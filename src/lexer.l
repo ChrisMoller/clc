@@ -20,7 +20,7 @@
 // http://stackoverflow.com/questions/5418181/flex-lex-encoding-strings-with-escaped-characters
 
 static int reading_file = 0;
-static double cvt_r (const char *nptr, char **endptr);
+static double cvt_r (char *nptr, char **endptr);
 static double cvt_i (const char *nptr, char **endptr);
 
 static void yyunput (int c, register char * yy_bp ) __attribute__ ((unused));
@@ -31,9 +31,9 @@ DIGIT       [0-9]
 NUMBER_T1   [eE]([+-])?{DIGIT}+[dDrR]?
 NUMBER_T2   {DIGIT}+(\.{DIGIT}*)?([eE]([+-])?{DIGIT}+)?[dDrR]?
 NUMBER_T3   \.{DIGIT}+([eE]([+-])?{DIGIT}+)?[dDrR]?
-NUMBER      {NUMBER_T1}|{NUMBER_T2}|{NUMBER_T3}
-IMAGINARY   {NUMBER}[iIjJ]
-COMPLEX     {NUMBER}[+-]{IMAGINARY}
+NUMBER      [~]?({NUMBER_T1}|{NUMBER_T2}|{NUMBER_T3})
+IMAGINARY   [~]?({NUMBER}[iIjJ])
+COMPLEX     [~]?{NUMBER}[+-]{IMAGINARY}
 SYMBOL      [[:alpha:]][[:alnum:]_]*
 QSTR        [^\\\"]*
 
@@ -48,6 +48,7 @@ QSTR        [^\\\"]*
   char * ep1;
   char * ep2 = NULL;
   double real, imag;
+  if (*yytext == '~') *yytext = '-';
   real = cvt_r (yytext, &ep1);
   imag = cvt_i (ep1, &ep2);
   if (ep2 && (*ep2 == 'd' || *ep2 == 'D'))
@@ -156,9 +157,10 @@ e		{ yylval.v = gsl_complex_rect (M_E,  0.0); return NUMBER; }
 
 
 static double
-cvt_r (const char *nptr, char **endptr)
+cvt_r (char *nptr, char **endptr)
 {
   double r;
+  if (*nptr == '~') *nptr = '-';
   if (*nptr == 'e' || *nptr == 'E') {
     char *tt = alloca (1 + strlen (nptr));
     *tt = '1';

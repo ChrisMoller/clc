@@ -85,7 +85,7 @@ eof     : EOS { $$ = 1; }
 
 phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 	| QSTRING { $$ = create_string_node (TYPE_LITERAL, $1); }
-	| NUMBER  { $$ = create_complex_node ($1); }
+	| NUMBER  { $$ = create_complex_node (0, $1); }
 	| phrase CATENATE modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
 	| phrase RIGHT_DYADIC modifier phrase

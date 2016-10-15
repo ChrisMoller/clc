@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <gsl/gsl_complex.h>
+#include <gsl/gsl_complex_math.h>
+
 #include "node.h"
 #include "printext.h"
 #include "memory.h"
@@ -185,11 +188,12 @@ create_string_node (type_e type, const char *s)
 }
 
 node_u
-create_complex_node (gsl_complex v)
+create_complex_node (int negate, gsl_complex v)
 {
   node_complex_s *node = malloc (sizeof(node_complex_s));
   node_refcnt (node) = 0;
   node_complex_type (node) = TYPE_COMPLEX;
+  if (negate) v = gsl_complex_negative (v);
   node_complex_value (node) = v;
 #ifdef DO_TREE
   insert_node ((node_u)node);

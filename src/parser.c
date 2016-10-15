@@ -1518,7 +1518,7 @@ yyreduce:
   case 12:
 /* Line 1792 of yacc.c  */
 #line 88 "parser.y"
-    { (yyval.n) = create_complex_node ((yyvsp[(1) - (1)].v)); }
+    { (yyval.n) = create_complex_node (0, (yyvsp[(1) - (1)].v)); }
     break;
 
   case 13:

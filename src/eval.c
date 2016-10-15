@@ -155,7 +155,7 @@ clc_random (node_u modifier, node_u ra)
       double rr = drand48 () * GSL_REAL (scale);
       double ri = drand48 () * GSL_IMAG (scale);
       gsl_complex rv = gsl_complex_rect (rr, ri);
-      rc = create_complex_node (rv);
+      rc = create_complex_node (0, rv);
     }
     break;
   case TYPE_CPX_VECTOR:	// rands within given ranges or random sequence
@@ -377,7 +377,7 @@ clc_complex_real (node_u modifier, node_u iarg)
     gsl_complex aa = node_complex_value (la);
     double vv = GSL_REAL (aa);
     gsl_complex rr = gsl_complex_rect (vv, 0.0);
-    rc = create_complex_node (rr);
+    rc = create_complex_node (0, rr);
   }
   return rc;
 }
@@ -392,7 +392,7 @@ clc_complex_imag (node_u modifier, node_u iarg)
     gsl_complex aa = node_complex_value (la);
     double vv = GSL_IMAG (aa);
     gsl_complex rr = gsl_complex_rect (vv, 0.0);
-    rc = create_complex_node (rr);
+    rc = create_complex_node (0, rr);
   }
   return rc;
 }
@@ -407,7 +407,7 @@ clc_complex_abs (node_u modifier, node_u iarg)
     gsl_complex aa = node_complex_value (la);
     double vv = gsl_complex_abs (aa);
     gsl_complex rr = gsl_complex_rect (vv, 0.0);
-    rc = create_complex_node (rr);
+    rc = create_complex_node (0, rr);
   }
   return rc;
 }
@@ -447,7 +447,7 @@ clc_complex_arg (node_u modifier, node_u iarg)
     gsl_complex aa = node_complex_value (la);
     double vv = gsl_complex_arg (aa);
     gsl_complex rr = gsl_complex_rect (vv, 0.0);
-    rc = create_complex_node (rr);
+    rc = create_complex_node (0, rr);
   }
   return rc;
 }
@@ -626,7 +626,7 @@ do_eval (int *noshow, node_u node)
 	      gsl_complex lv = node_complex_value (ls);
 	      gsl_complex rv = node_complex_value (rs);
 	      gsl_complex vv = (*op)(lv, rv);
-	      rc = create_complex_node (vv);
+	      rc = create_complex_node (0, vv);
 	    }
 	  }
 	}
@@ -705,9 +705,9 @@ do_eval (int *noshow, node_u node)
 	    gsl_complex lv = node_complex_value (ls);
 	    if (op) {
 	      gsl_complex vv = (*op)(lv);
-	      rc = create_complex_node (vv);
+	      rc = create_complex_node (0, vv);
 	    }
-	    else rc = create_complex_node (lv);
+	    else rc = create_complex_node (0, lv);
 	  }
 	}
 	break;
@@ -729,7 +729,7 @@ do_eval (int *noshow, node_u node)
 		    node_complex_s *v1 = node_complex (a1);
 		    gsl_complex vv = (*op)(node_complex_value (v0),
 					   node_complex_value (v1));
-		    rc = create_complex_node (vv);
+		    rc = create_complex_node (0, vv);
 		  }
 		}
 	      }
