@@ -246,7 +246,8 @@ create_function (const char *name, node_u params, node_u body)
   node_incref (params);
   node_function_body (node) = body;
   node_incref (body);
-  do_assign (name, body);
+  node_incref ((node_u)node);
+  do_assign (name, (node_u)node);
 }
 
 node_u

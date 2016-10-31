@@ -109,7 +109,7 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 \<              { yylval.d = SYM_LT;     return RIGHT_CLC_DYADIC; }
 \|              { yylval.d = SYM_BAR;    return RIGHT_CLC_DYADIC; }
 \,		{ yylval.d = SYM_COMMA;  return CATENATE; }
-\=		{ yylval.d = SYM_EQUAL;  return RIGHT_CLC_DYADIC; }
+\=		{ yylval.d = SYM_EQUAL;  return ASSIGN; }
 \?		{ yylval.d = SYM_QMARK;  return RIGHT_CLC_DYADIC; }
 
 \(		return LEFT_PAREN;

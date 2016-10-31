@@ -452,6 +452,56 @@ clc_complex_arg (node_u modifier, node_u iarg)
   return rc;
 }
 
+static void
+append_to_list (node_list_s **list_p, node_u node)
+{
+  node_list_s *list = *list_p;
+  if (!list) {
+    list = malloc (sizeof(node_list_s));
+    node_list_type (list) = TYPE_LIST;
+    node_function_refcnt (list) = 0;
+    node_list_max (list) = NODE_LIST_INCR;
+    node_list_next (list) = 0;
+    node_list_list (list) = calloc (node_list_max (list), sizeof(node_u));
+    *list_p = list;
+  }
+  if (node_list_max (list) <= node_list_next (list)) {
+    node_list_max (list) += NODE_LIST_INCR;
+    node_list_list (list) =
+      realloc (node_list_list (list),
+	       node_list_max (list) * sizeof(node_u));
+  }	
+  node_list_list (list)[node_list_next (list)++] = node;
+}
+
+static void
+flatten (node_list_s **list_p, node_u node)
+{
+  if (!list_p) return;
+  switch(get_type (node)) {
+  case TYPE_DYADIC:
+    {
+      node_dyadic_s *dyad = node_dyadic (node);
+      sym_e sym = node_dyadic_op (dyad);
+      if (sym != SYM_COMMA) append_to_list (list_p, node);
+      else {
+	flatten (list_p, node_dyadic_la (dyad));
+	flatten (list_p, node_dyadic_ra (dyad));
+      }
+    }
+    break;
+  case TYPE_MONADIC:
+    {
+      node_monadic_s *monad = node_monadic (node);
+      flatten (list_p, node_monadic_arg (monad));
+    }
+    break;
+  default:
+    append_to_list (list_p, node);
+    break;
+  }
+}
+
 node_u
 do_eval (int *noshow, node_u node)
 {
@@ -463,10 +513,27 @@ do_eval (int *noshow, node_u node)
   case TYPE_CALL:
     {
       node_call_s *call = node_call (node);
-      char *fcn  = node_call_fcn (call);
-      //node_u args = node_call_args (call);
-      node_u body = lookup_symbol (fcn);
-      if (get_type (body) != TYPE_NULL) {
+      node_list_s *arg_list = NULL;
+      flatten (&arg_list, node_call_args (call));
+#if 1
+      for (int i = 0; i < node_list_next (arg_list); i++) {
+	printf ("arg node %d\n", i);
+	print_node (0, node_list_list (arg_list)[i]);
+      }
+#endif
+      char *fcn_name  = node_call_fcn (call);
+      node_u fcn_node = lookup_symbol (fcn_name);
+      if (get_type (fcn_node) == TYPE_FUNCTION) {
+	node_function_s *node = node_function (fcn_node);
+	node_u body = node_function_body (node);
+	node_list_s *param_list = NULL;
+	flatten (&param_list, node_function_params (node));
+#if 1
+	for (int i = 0; i < node_list_next (param_list); i++) {
+	  printf ("param node %d\n", i);
+	  print_node (0, node_list_list (param_list)[i]);
+	}
+#endif
 	rc = do_eval (NULL, body);
       }
 #if 0

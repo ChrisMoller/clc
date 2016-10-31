@@ -36,6 +36,7 @@ void yyerror (char const *);
 %token <v> NUMBER
 %token <s> SYMBOL
 %token <s> QSTRING
+%right     ASSIGN
 %left  <d> CATENATE
 %right <d> RIGHT_DYADIC
 %right <d> RIGHT_CLC_DYADIC
@@ -92,6 +93,8 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3, $4); }
 	| phrase RIGHT_CLC_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
+	| phrase ASSIGN modifier phrase %prec ASSIGN
+		{ $$ = create_dyadic_node ($1, SYM_EQUAL, OP_TYPE_CLC, $3, $4); }
 	| RIGHT_DYADIC modifier phrase %prec MONADIC
 		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2, $3); }
 	| RIGHT_CLC_DYADIC modifier phrase %prec MONADIC
