@@ -515,12 +515,6 @@ do_eval (int *noshow, node_u node)
       node_call_s *call = node_call (node);
       node_list_s *arg_list = NULL;
       flatten (&arg_list, node_call_args (call));
-#if 1
-      for (int i = 0; i < node_list_next (arg_list); i++) {
-	printf ("arg node %d\n", i);
-	print_node (0, node_list_list (arg_list)[i]);
-      }
-#endif
       char *fcn_name  = node_call_fcn (call);
       node_u fcn_node = lookup_symbol (fcn_name);
       if (get_type (fcn_node) == TYPE_FUNCTION) {
@@ -528,13 +522,23 @@ do_eval (int *noshow, node_u node)
 	node_u body = node_function_body (node);
 	node_list_s *param_list = NULL;
 	flatten (&param_list, node_function_params (node));
-#if 1
+	push_symtab ();
 	for (int i = 0; i < node_list_next (param_list); i++) {
+	  do_eval (NULL, node_list_list (param_list)[i]);
+#if 0
 	  printf ("param node %d\n", i);
 	  print_node (0, node_list_list (param_list)[i]);
-	}
 #endif
+	}
+	for (int i = 0; i < node_list_next (arg_list); i++) {
+	  do_eval (NULL, node_list_list (arg_list)[i]);
+#if 0
+	  printf ("arg node %d\n", i);
+	  print_node (0, node_list_list (arg_list)[i]);
+#endif
+	}
 	rc = do_eval (NULL, body);
+	pop_symtab ();
       }
 #if 0
       push_symtab ();

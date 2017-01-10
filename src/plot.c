@@ -241,10 +241,12 @@ parseopts_set_lineary (node_u argi)
 void
 parseopts_set_axes (node_u argi)
 {
+  printf ("in axes\n");
   node_u arg = do_eval (NULL, argi);
   if (get_type (arg) == TYPE_COMPLEX) {
     node_complex_s *ls = node_complex (arg);
     int val = (int)GSL_REAL (node_complex_value (ls));
+    printf ("setting %d\n", val);
     plot_options_axes (&plot_options) = val;
   }
 }
