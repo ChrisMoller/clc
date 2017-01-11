@@ -8,12 +8,12 @@ typedef struct {
 #define sym_lbl(e)  ((e)->lbl)
 #define sym_node(e) ((e)->node)
 
-node_u  clc_lt (node_u modifier, node_u la, node_u ra);
-node_u  clc_le (node_u modifier, node_u la, node_u ra);
-node_u  clc_gt (node_u modifier, node_u la, node_u ra);
-node_u  clc_ge (node_u modifier, node_u la, node_u ra);
-node_u  clc_eq (node_u modifier, node_u la, node_u ra);
-node_u  clc_ne (node_u modifier, node_u la, node_u ra);
+node_u  clc_lt (gsl_complex *retp, node_u modifier, node_u la, node_u ra);
+node_u  clc_le (gsl_complex *retp, node_u modifier, node_u la, node_u ra);
+node_u  clc_gt (gsl_complex *retp, node_u modifier, node_u la, node_u ra);
+node_u  clc_ge (gsl_complex *retp, node_u modifier, node_u la, node_u ra);
+node_u  clc_eq (gsl_complex *retp, node_u modifier, node_u la, node_u ra);
+node_u  clc_ne (gsl_complex *retp, node_u modifier, node_u la, node_u ra);
 node_u  clc_assign (node_u modifier, node_u la, node_u ra);
 node_u  clc_range (node_u modifier, node_u la, node_u ra);
 node_u  clc_index (node_u modifier, node_u arg);

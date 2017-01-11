@@ -22,7 +22,9 @@
 
 typedef gsl_complex (*cpx_dyadic)(gsl_complex a, gsl_complex b);
 typedef gsl_complex (*cpx_monadic)(gsl_complex a);
-typedef node_u (*clc_dyadic)(node_u modifier, node_u la, node_u ra);
+typedef node_u (*clcx_dyadic)(node_u modifier, node_u la, node_u ra);
+typedef node_u (*clc_dyadic)(gsl_complex *retp, node_u modifier,
+			     node_u la, node_u ra);
 typedef node_u (*clc_monadic)(node_u modifier, node_u arg);
 
 typedef struct {
@@ -292,7 +294,8 @@ static inline double do_eq (double x, double y) {return (x == y) ? 1.0 : 0.0;}
 static inline double do_ne (double x, double y) {return (x != y) ? 1.0 : 0.0;}
 
 static node_u
-clc_compare (compare_op cpr, node_u modifier, node_u la, node_u ra)
+clc_compare (gsl_complex *retp, compare_op cpr,
+	     node_u modifier, node_u la, node_u ra)
 {
   /***
       modifier mag, pha, real, imag
@@ -376,45 +379,46 @@ clc_compare (compare_op cpr, node_u modifier, node_u la, node_u ra)
       break;
     }
     gsl_complex rr = gsl_complex_rect (ry, iy);
-    rc = create_complex_node (0, rr);
+    if (retp) *retp = rr;
+    else rc = create_complex_node (0, rr);
   }
   return rc;
 }
 
 node_u
-clc_lt (node_u modifier, node_u la, node_u ra)
+clc_lt (gsl_complex *retp, node_u modifier, node_u la, node_u ra)
 {
-  return clc_compare (do_lt, modifier, la, ra);
+  return clc_compare (retp, do_lt, modifier, la, ra);
 }
 
 node_u
-clc_le (node_u modifier, node_u la, node_u ra)
+clc_le (gsl_complex *retp, node_u modifier, node_u la, node_u ra)
 {
-  return clc_compare (do_le, modifier, la, ra);
+  return clc_compare (retp, do_le, modifier, la, ra);
 }
 
 node_u
-clc_gt (node_u modifier, node_u la, node_u ra)
+clc_gt (gsl_complex *retp, node_u modifier, node_u la, node_u ra)
 {
-  return clc_compare (do_gt, modifier, la, ra);
+  return clc_compare (retp, do_gt, modifier, la, ra);
 }
 
 node_u
-clc_ge (node_u modifier, node_u la, node_u ra)
+clc_ge (gsl_complex *retp, node_u modifier, node_u la, node_u ra)
 {
-  return clc_compare (do_ge, modifier, la, ra);
+  return clc_compare (retp, do_ge, modifier, la, ra);
 }
 
 node_u
-clc_eq (node_u modifier, node_u la, node_u ra)
+clc_eq (gsl_complex *retp, node_u modifier, node_u la, node_u ra)
 {
-  return clc_compare (do_eq, modifier, la, ra);
+  return clc_compare (retp, do_eq, modifier, la, ra);
 }
 
 node_u
-clc_ne (node_u modifier, node_u la, node_u ra)
+clc_ne (gsl_complex *retp, node_u modifier, node_u la, node_u ra)
 {
-  return clc_compare (do_ne, modifier, la, ra);
+  return clc_compare (retp, do_ne, modifier, la, ra);
 }
 
 static int
@@ -729,10 +733,72 @@ do_eval (int *noshow, node_u node)
       node_u modifier = node_dyadic_modifier (dyad);
       op_type_e op_type = node_dyadic_op_type (dyad);
 
+
       if (op_type == OP_TYPE_CLC) {
 	if (noshow && sym == SYM_EQUAL) *noshow = 1;
 	clc_dyadic op = op_dyadic (sym);
-	if (op) rc = (*op)(modifier, la, ra);
+
+	if (sym == SYM_POUND || sym == SYM_COMMA ||
+	    sym == SYM_COLCOL) {
+	  clcx_dyadic op = op_dyadic (sym);
+	  rc = (*op)(modifier, la, ra);
+	  return rc;
+	}
+	if (op) {
+	  switch(TYPE_GEN (get_type (la), get_type (ra))) {
+	  case TYPE_GEN (TYPE_COMPLEX, TYPE_CPX_VECTOR):
+	    {
+	      node_complex_s node;
+	      node_refcnt (&node) = 0;
+	      node_complex_type (&node) = TYPE_COMPLEX;
+	      node_cpx_vector_s *rs = node_cpx_vector (ra);
+	      rc = create_complex_vector_node ();
+	      node_cpx_vector_s *vs = node_cpx_vector (rc);
+	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+		node_cpx_vector_next (rs);
+	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (rs);
+	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (rs);
+	      node_cpx_vector_data (vs) =
+		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+	      for (int i = 0; i < node_cpx_vector_next (rs); i++) {
+		node_complex_value (&node) = node_cpx_vector_data (rs)[i];
+		gsl_complex vvv;
+	        (*op)(&vvv, modifier, la, (node_u)&node);
+		node_cpx_vector_data (vs)[i] = vvv;
+	      }
+	    }
+	    break;
+	  case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_COMPLEX):
+	    {
+	      node_complex_s node;
+	      node_refcnt (&node) = 0;
+	      node_complex_type (&node) = TYPE_COMPLEX;
+	      node_cpx_vector_s *ls = node_cpx_vector (la);
+	      rc = create_complex_vector_node ();
+	      node_cpx_vector_s *vs = node_cpx_vector (rc);
+	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+		node_cpx_vector_next (ls);
+	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
+	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
+	      node_cpx_vector_data (vs) =
+		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+	      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
+		node_complex_value (&node) = node_cpx_vector_data (ls)[i];
+		gsl_complex vvv;
+	        (*op)(&vvv, modifier, (node_u)&node, ra);
+		node_cpx_vector_data (vs)[i] = vvv;
+	      }
+	    }
+	    break;
+	  case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_CPX_VECTOR):
+	    {
+	    }
+	    break;
+	  case TYPE_GEN (TYPE_COMPLEX, TYPE_COMPLEX):
+	    rc = (*op)(NULL, modifier, la, ra);
+	    break;
+	  }
+	}
 	return rc;
       }
 
