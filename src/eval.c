@@ -282,8 +282,17 @@ clc_file (node_u modifier, node_u arg)
   return rc;
 }
 
-node_u
-clc_lt (node_u modifier, node_u la, node_u ra)
+typedef double (*compare_op)(double x, double y);
+
+static double do_lt (double x, double y) {return (x <  y) ? 1.0 : 0.0;}
+static double do_le (double x, double y) {return (x <= y) ? 1.0 : 0.0;}
+static double do_gt (double x, double y) {return (x >  y) ? 1.0 : 0.0;}
+static double do_ge (double x, double y) {return (x >= y) ? 1.0 : 0.0;}
+static double do_eq (double x, double y) {return (x == y) ? 1.0 : 0.0;}
+static double do_ne (double x, double y) {return (x != y) ? 1.0 : 0.0;}
+
+static node_u
+clc_compare (compare_op cpr, node_u modifier, node_u la, node_u ra)
 {
   /***
       modifier mag, pha, real, imag
@@ -336,40 +345,76 @@ clc_lt (node_u modifier, node_u la, node_u ra)
     case MOD_MAG:
       lm = gsl_complex_abs (lx);
       rm = gsl_complex_abs (rx);
-      ry = (lm < rm) ? 1.0 : 0.0;
+      ry = (*cpr)(lm, rm);
       iy = 0.0;
       break;
     case MOD_PHASE:
       lm = gsl_complex_arg (lx);
       rm = gsl_complex_arg (rx);
-      ry = (lm < rm) ? 1.0 : 0.0;
+      ry = (*cpr)(lm, rm);
       iy = 0.0;
       break;
     case MOD_REAL:
       lm = GSL_REAL (lx);
       rm = GSL_REAL (rx);
-      ry = (lm < rm) ? 1.0 : 0.0;
+      ry = (*cpr)(lm, rm);
       iy = 0.0;
       break;
     case MOD_IMAG:
       lm = GSL_IMAG (lx);
       rm = GSL_IMAG (rx);
-      ry = (lm < rm) ? 1.0 : 0.0;
+      ry = (*cpr)(lm, rm);
       iy = 0.0;
       break;
     case MOD_CPX:
       lm = GSL_REAL (lx);
       rm = GSL_REAL (rx);
-      ry = (lm < rm) ? 1.0 : 0.0;
+      ry = (*cpr)(lm, rm);
       lm = GSL_IMAG (lx);
       rm = GSL_IMAG (rx);
-      iy = (lm < rm) ? 1.0 : 0.0;
+      iy = (*cpr)(lm, rm);
       break;
     }
     gsl_complex rr = gsl_complex_rect (ry, iy);
     rc = create_complex_node (0, rr);
   }
   return rc;
+}
+
+node_u
+clc_lt (node_u modifier, node_u la, node_u ra)
+{
+  return clc_compare (do_lt, modifier, la, ra);
+}
+
+node_u
+clc_le (node_u modifier, node_u la, node_u ra)
+{
+  return clc_compare (do_le, modifier, la, ra);
+}
+
+node_u
+clc_gt (node_u modifier, node_u la, node_u ra)
+{
+  return clc_compare (do_gt, modifier, la, ra);
+}
+
+node_u
+clc_ge (node_u modifier, node_u la, node_u ra)
+{
+  return clc_compare (do_ge, modifier, la, ra);
+}
+
+node_u
+clc_eq (node_u modifier, node_u la, node_u ra)
+{
+  return clc_compare (do_eq, modifier, la, ra);
+}
+
+node_u
+clc_ne (node_u modifier, node_u la, node_u ra)
+{
+  return clc_compare (do_ne, modifier, la, ra);
 }
 
 static int
