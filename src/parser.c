@@ -514,9 +514,9 @@ static const yytype_int8 yyrhs[] =
 static const yytype_uint8 yyrline[] =
 {
        0,    63,    63,    64,    65,    76,    77,    80,    85,    86,
-      89,    90,    93,    94,    95,    96,    98,   100,   102,   104,
-     106,   108,   110,   112,   113,   114,   117,   118,   119,   123,
-     124
+      89,    90,    93,    94,    95,    96,    98,   100,   102,   105,
+     107,   109,   111,   113,   114,   115,   118,   119,   120,   124,
+     125
 };
 #endif
 
@@ -1557,84 +1557,85 @@ yyreduce:
   case 18:
 /* Line 1792 of yacc.c  */
 #line 103 "parser.y"
-    { (yyval.n) = create_dyadic_node ((yyvsp[(1) - (4)].n), SYM_EQUAL, OP_TYPE_CLC, (yyvsp[(3) - (4)].n), (yyvsp[(4) - (4)].n)); }
+    { (yyval.n) = create_dyadic_node ((yyvsp[(1) - (4)].n), SYM_EQUAL,
+					   OP_TYPE_CLC, (yyvsp[(3) - (4)].n), (yyvsp[(4) - (4)].n)); }
     break;
 
   case 19:
 /* Line 1792 of yacc.c  */
-#line 105 "parser.y"
+#line 106 "parser.y"
     { (yyval.n) = create_monadic_node ((yyvsp[(1) - (3)].d), OP_TYPE_GSL, (yyvsp[(2) - (3)].n), (yyvsp[(3) - (3)].n)); }
     break;
 
   case 20:
 /* Line 1792 of yacc.c  */
-#line 107 "parser.y"
+#line 108 "parser.y"
     { (yyval.n) = create_monadic_node ((yyvsp[(1) - (3)].d), OP_TYPE_CLC, (yyvsp[(2) - (3)].n), (yyvsp[(3) - (3)].n)); }
     break;
 
   case 21:
 /* Line 1792 of yacc.c  */
-#line 109 "parser.y"
+#line 110 "parser.y"
     { (yyval.n) = create_monadic_node ((yyvsp[(1) - (5)].d), OP_TYPE_GSL, (yyvsp[(2) - (5)].n), (yyvsp[(4) - (5)].n)); }
     break;
 
   case 22:
 /* Line 1792 of yacc.c  */
-#line 111 "parser.y"
+#line 112 "parser.y"
     { (yyval.n) = create_monadic_node ((yyvsp[(1) - (5)].d), OP_TYPE_CLC, (yyvsp[(2) - (5)].n), (yyvsp[(4) - (5)].n)); }
     break;
 
   case 23:
 /* Line 1792 of yacc.c  */
-#line 112 "parser.y"
+#line 113 "parser.y"
     { (yyval.n) = (yyvsp[(2) - (3)].n); }
     break;
 
   case 24:
 /* Line 1792 of yacc.c  */
-#line 113 "parser.y"
+#line 114 "parser.y"
     { (yyval.n) = (yyvsp[(2) - (3)].n); }
     break;
 
   case 25:
 /* Line 1792 of yacc.c  */
-#line 114 "parser.y"
+#line 115 "parser.y"
     { (yyval.n) = create_call ((yyvsp[(1) - (4)].s), (yyvsp[(3) - (4)].n)); }
     break;
 
   case 26:
 /* Line 1792 of yacc.c  */
-#line 117 "parser.y"
+#line 118 "parser.y"
     { (yyval.n) = NULL_NODE; }
     break;
 
   case 27:
 /* Line 1792 of yacc.c  */
-#line 118 "parser.y"
+#line 119 "parser.y"
     { (yyval.n) = NULL_NODE; }
     break;
 
   case 28:
 /* Line 1792 of yacc.c  */
-#line 119 "parser.y"
+#line 120 "parser.y"
     { (yyval.n) = (yyvsp[(2) - (3)].n); }
     break;
 
   case 29:
 /* Line 1792 of yacc.c  */
-#line 123 "parser.y"
+#line 124 "parser.y"
     { (yyval.n) = create_complex_vector_node (); }
     break;
 
   case 30:
 /* Line 1792 of yacc.c  */
-#line 125 "parser.y"
+#line 126 "parser.y"
     { (yyval.n) = append_complex_vector_node ((yyvsp[(1) - (2)].n), (yyvsp[(2) - (2)].v)); }
     break;
 
 
 /* Line 1792 of yacc.c  */
-#line 1638 "parser.c"
+#line 1639 "parser.c"
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1866,7 +1867,7 @@ yyreturn:
 
 
 /* Line 2055 of yacc.c  */
-#line 128 "parser.y"
+#line 129 "parser.y"
 
 
 

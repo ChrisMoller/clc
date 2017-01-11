@@ -20,7 +20,7 @@ PKG_CHECK_MODULES([LIBFFI], [libffi >= 3.0.13], ,
 AC_SUBST(LIBFFI_CFLAGS)
 AC_SUBST(LIBFFI_LIBS)
 
-PKG_CHECK_MODULES([PLPLOT], [plplotd >= 5.9.9], ,
+PKG_CHECK_MODULES([PLPLOT], [plplot >= 5.11.1], ,
   [echo "";
   echo ">>>> You need to install the plplot and plplot-devel packages. <<<<";
   echo ""; exit])

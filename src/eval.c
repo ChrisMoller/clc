@@ -282,6 +282,96 @@ clc_file (node_u modifier, node_u arg)
   return rc;
 }
 
+node_u
+clc_lt (node_u modifier, node_u la, node_u ra)
+{
+  /***
+      modifier mag, pha, real, imag
+   ***/
+  node_u rc = NULL_NODE;
+  node_u ln = do_eval (NULL, la);
+  node_u rn = do_eval (NULL, ra);
+  node_u mn = do_eval (NULL, modifier);
+  
+  if (get_type (ln) == TYPE_COMPLEX &&
+      get_type (rn) == TYPE_COMPLEX) {
+
+    typedef enum {MOD_MAG, MOD_PHASE, MOD_REAL, MOD_IMAG, MOD_CPX} mod_mode_e;
+    mod_mode_e mod_mode = MOD_MAG;
+    
+    if (get_type (mn) == TYPE_SYMBOL) {
+      node_string_s *mv = node_string (mn);
+      char *mx = node_string_value (mv);
+      switch(*mx) {
+      case 'm':
+      case 'M':
+	mod_mode = MOD_MAG;
+	break;
+      case 'p':
+      case 'P':
+	mod_mode = MOD_PHASE;
+	break;
+      case 'r':
+      case 'R':
+	mod_mode = MOD_REAL;
+	break;
+      case 'i':
+      case 'I':
+	mod_mode = MOD_IMAG;
+	break;
+      case 'c':
+      case 'C':
+	mod_mode = MOD_CPX;
+	break;
+      }
+    }
+
+    
+    node_complex_s *lv = node_complex (ln);
+    node_complex_s *rv = node_complex (rn);
+    gsl_complex lx = node_complex_value (lv);
+    gsl_complex rx = node_complex_value (rv);
+    double lm = 0.0, rm = 0.0, ry = 0.0, iy = 0.0;
+    switch(mod_mode) {
+    case MOD_MAG:
+      lm = gsl_complex_abs (lx);
+      rm = gsl_complex_abs (rx);
+      ry = (lm < rm) ? 1.0 : 0.0;
+      iy = 0.0;
+      break;
+    case MOD_PHASE:
+      lm = gsl_complex_arg (lx);
+      rm = gsl_complex_arg (rx);
+      ry = (lm < rm) ? 1.0 : 0.0;
+      iy = 0.0;
+      break;
+    case MOD_REAL:
+      lm = GSL_REAL (lx);
+      rm = GSL_REAL (rx);
+      ry = (lm < rm) ? 1.0 : 0.0;
+      iy = 0.0;
+      break;
+    case MOD_IMAG:
+      lm = GSL_IMAG (lx);
+      rm = GSL_IMAG (rx);
+      ry = (lm < rm) ? 1.0 : 0.0;
+      iy = 0.0;
+      break;
+    case MOD_CPX:
+      lm = GSL_REAL (lx);
+      rm = GSL_REAL (rx);
+      ry = (lm < rm) ? 1.0 : 0.0;
+      lm = GSL_IMAG (lx);
+      rm = GSL_IMAG (rx);
+      iy = (lm < rm) ? 1.0 : 0.0;
+      break;
+    }
+    gsl_complex rr = gsl_complex_rect (ry, iy);
+    rc = create_complex_node (0, rr);
+  }
+  return rc;
+}
+
 static int
 var_compare (const void *a, const void *b)
 {

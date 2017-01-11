@@ -8,6 +8,7 @@ typedef struct {
 #define sym_lbl(e)  ((e)->lbl)
 #define sym_node(e) ((e)->node)
 
+node_u  clc_lt (node_u modifier, node_u la, node_u ra);
 node_u  clc_assign (node_u modifier, node_u la, node_u ra);
 node_u  clc_range (node_u modifier, node_u la, node_u ra);
 node_u  clc_index (node_u modifier, node_u arg);
