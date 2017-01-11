@@ -792,6 +792,35 @@ do_eval (int *noshow, node_u node)
 	    break;
 	  case TYPE_GEN (TYPE_CPX_VECTOR, TYPE_CPX_VECTOR):
 	    {
+	      node_complex_s nodel;
+	      node_complex_s noder;
+	      node_refcnt (&nodel) = 0;
+	      node_refcnt (&noder) = 0;
+	      node_complex_type (&nodel) = TYPE_COMPLEX;
+	      node_complex_type (&noder) = TYPE_COMPLEX;
+	      node_cpx_vector_s *ls = node_cpx_vector (la);
+	      node_cpx_vector_s *rs = node_cpx_vector (ra);
+	      if (node_cpx_vector_next (ls) ==
+		  node_cpx_vector_next (rs)) {
+		rc = create_complex_vector_node ();
+		node_cpx_vector_s *vs = node_cpx_vector (rc);
+		node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+		  node_cpx_vector_next (ls);
+		node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
+		node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
+		node_cpx_vector_data (vs) =
+		  malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+		for (int i = 0; i < node_cpx_vector_next (ls); i++) {
+		  node_complex_value (&nodel) = node_cpx_vector_data (ls)[i];
+		  node_complex_value (&noder) = node_cpx_vector_data (rs)[i];
+		  gsl_complex vvv;
+		  (*op)(&vvv, modifier, (node_u)&nodel, (node_u)&noder);
+		  node_cpx_vector_data (vs)[i] = vvv;
+		}
+	      }
+	      else {
+		// fixme err dim mismatch. also check row/col mismatch
+	      }
 	    }
 	    break;
 	  case TYPE_GEN (TYPE_COMPLEX, TYPE_COMPLEX):
