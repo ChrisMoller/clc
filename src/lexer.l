@@ -86,6 +86,9 @@ logb            { yylval.d = SYM_LOG;    return BIF; }
 file            { yylval.d = SYM_FILE;   return CLC_BIF; }
 real            { yylval.d = SYM_REAL;   return CLC_BIF; }
 imag            { yylval.d = SYM_IMAG;   return CLC_BIF; }
+pha             { yylval.d = SYM_ARG;    return CLC_BIF; }
+arg             { yylval.d = SYM_ARG;    return CLC_BIF; }
+mag             { yylval.d = SYM_MAG;    return CLC_BIF; }
 sqrt            { yylval.d = SYM_SQRT;   return BIF; }
 plot            { yylval.d = SYM_PLOT;   return CLC_BIF; }
 sin             { yylval.d = SYM_SIN;    return BIF; }
@@ -94,19 +97,29 @@ tan             { yylval.d = SYM_TAN;    return BIF; }
 log             { yylval.d = SYM_LOG;    return BIF; }
 set             { return SET; }
 ln              { yylval.d = SYM_LN;     return BIF; }
+\?!\<\=         { yylval.d = SYM_GT;     return RIGHT_CLC_DYADIC; }
+\?!\>\=         { yylval.d = SYM_LT;     return RIGHT_CLC_DYADIC; }
+\?\!\=          { yylval.d = SYM_NE;     return RIGHT_CLC_DYADIC; }
+\?\!\<          { yylval.d = SYM_GE;     return RIGHT_CLC_DYADIC; }
+\?\!\>          { yylval.d = SYM_LE;     return RIGHT_CLC_DYADIC; }
+\?<\=           { yylval.d = SYM_LE;     return RIGHT_CLC_DYADIC; }
+\?>\=           { yylval.d = SYM_GE;     return RIGHT_CLC_DYADIC; }
 \>\<            { yylval.d = SYM_GTLT;   return RIGHT_CLC_DYADIC; }
 \<\>            { yylval.d = SYM_LTGT;   return RIGHT_CLC_DYADIC; }
 \:\:            { yylval.d = SYM_COLCOL; return RIGHT_CLC_DYADIC; }
 \/\+            { yylval.d = SYM_SLASHPLUS; return RIGHT_CLC_DYADIC; }
 \/\*            { yylval.d = SYM_SLASHSTAR; return RIGHT_CLC_DYADIC; }
 \@\@            { BEGIN (COMMENT); }
+\?\<            { yylval.d = SYM_LT;     return RIGHT_CLC_DYADIC; }
+\?\>            { yylval.d = SYM_GT;     return RIGHT_CLC_DYADIC; }
+\?\=            { yylval.d = SYM_EQ;     return RIGHT_CLC_DYADIC; }
+\<              { yylval.d = SYM_ARG;    return RIGHT_CLC_DYADIC; }
 \#              { yylval.d = SYM_POUND;  return RIGHT_CLC_DYADIC; }
 \+              { yylval.d = SYM_PLUS;   return RIGHT_DYADIC; }
 \-              { yylval.d = SYM_MINUS;  return RIGHT_DYADIC; }
 \*              { yylval.d = SYM_STAR;   return RIGHT_DYADIC; }
 \/              { yylval.d = SYM_SLASH;  return RIGHT_DYADIC; }
 \^              { yylval.d = SYM_HAT;    return RIGHT_DYADIC; }
-\<              { yylval.d = SYM_LT;     return RIGHT_CLC_DYADIC; }
 \|              { yylval.d = SYM_BAR;    return RIGHT_CLC_DYADIC; }
 \,		{ yylval.d = SYM_COMMA;  return CATENATE; }
 \=		{ yylval.d = SYM_EQUAL;  return ASSIGN; }

@@ -284,12 +284,12 @@ clc_file (node_u modifier, node_u arg)
 
 typedef double (*compare_op)(double x, double y);
 
-static double do_lt (double x, double y) {return (x <  y) ? 1.0 : 0.0;}
-static double do_le (double x, double y) {return (x <= y) ? 1.0 : 0.0;}
-static double do_gt (double x, double y) {return (x >  y) ? 1.0 : 0.0;}
-static double do_ge (double x, double y) {return (x >= y) ? 1.0 : 0.0;}
-static double do_eq (double x, double y) {return (x == y) ? 1.0 : 0.0;}
-static double do_ne (double x, double y) {return (x != y) ? 1.0 : 0.0;}
+static inline double do_lt (double x, double y) {return (x <  y) ? 1.0 : 0.0;}
+static inline double do_le (double x, double y) {return (x <= y) ? 1.0 : 0.0;}
+static inline double do_gt (double x, double y) {return (x >  y) ? 1.0 : 0.0;}
+static inline double do_ge (double x, double y) {return (x >= y) ? 1.0 : 0.0;}
+static inline double do_eq (double x, double y) {return (x == y) ? 1.0 : 0.0;}
+static inline double do_ne (double x, double y) {return (x != y) ? 1.0 : 0.0;}
 
 static node_u
 clc_compare (compare_op cpr, node_u modifier, node_u la, node_u ra)

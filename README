@@ -38,13 +38,20 @@ exp	exp
 ^	logical one			logical xor
 !	logical not
 
-<=					*less than/eq
->=					*greater than/eq
-=					*equal
-!=					*not equal
->					*greater than
-<	phase				*less than
+?<					less than
+?<=					less than or eq
+?>					greater than
+?>=					greater than oreq
+?=					equal
+?!=					not equal
+?!<					not less than  (ge)
+?!<=					not less than or eq (gt)
+?!>					not greater than  (le)
+?!>=					not greater than or eq (lt)
+
+<	phase
 arg	phase
+pha	phase
 abs	magnitude
 mag	magnitude
 |	magnitude
