@@ -309,7 +309,7 @@ clc_compare (gsl_complex *retp, compare_op cpr,
       get_type (rn) == TYPE_COMPLEX) {
 
     typedef enum {MOD_MAG, MOD_PHASE, MOD_REAL, MOD_IMAG, MOD_CPX} mod_mode_e;
-    mod_mode_e mod_mode = MOD_MAG;
+    mod_mode_e mod_mode = MOD_CPX;
     
     if (get_type (mn) == TYPE_SYMBOL) {
       node_string_s *mv = node_string (mn);
@@ -343,6 +343,7 @@ clc_compare (gsl_complex *retp, compare_op cpr,
     node_complex_s *rv = node_complex (rn);
     gsl_complex lx = node_complex_value (lv);
     gsl_complex rx = node_complex_value (rv);
+    if (GSL_IMAG (lx) == 0.0 && GSL_IMAG (rx) == 0.0) mod_mode = MOD_MAG;
     double lm = 0.0, rm = 0.0, ry = 0.0, iy = 0.0;
     switch(mod_mode) {
     case MOD_MAG:

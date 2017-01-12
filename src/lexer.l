@@ -89,12 +89,14 @@ imag            { yylval.d = SYM_IMAG;   return CLC_BIF; }
 pha             { yylval.d = SYM_ARG;    return CLC_BIF; }
 arg             { yylval.d = SYM_ARG;    return CLC_BIF; }
 mag             { yylval.d = SYM_MAG;    return CLC_BIF; }
+abs             { yylval.d = SYM_MAG;    return CLC_BIF; }
 sqrt            { yylval.d = SYM_SQRT;   return BIF; }
 plot            { yylval.d = SYM_PLOT;   return CLC_BIF; }
 sin             { yylval.d = SYM_SIN;    return BIF; }
 cos             { yylval.d = SYM_COS;    return BIF; }
 tan             { yylval.d = SYM_TAN;    return BIF; }
 log             { yylval.d = SYM_LOG;    return BIF; }
+exp             { yylval.d = SYM_EXP;    return BIF; }
 set             { return SET; }
 ln              { yylval.d = SYM_LN;     return BIF; }
 \?!\<\=         { yylval.d = SYM_GT;     return RIGHT_CLC_DYADIC; }

@@ -105,5 +105,7 @@
 	 0, 1, NULL, "ln"),
   ENTRY ("log", SYM_LOG,	gsl_complex_log_b,	gsl_complex_log10,
 	 2, 1, "log base n", "log base 10"),
+  ENTRY ("exp", SYM_EXP,	NULL,			gsl_complex_exp,
+	 0, 1, NULL, "exp"),
   ENTRY (NULL, SYM_COUNT,	NULL,			NULL,
 	 0, 0, NULL, NULL)
