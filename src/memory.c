@@ -139,6 +139,34 @@ node_decref (node_u node)
 }
 
 node_u
+append_matrix (node_u lv, node_u rv)
+{
+  node_cpx_vector_s *ln = node_cpx_vector (lv);
+  node_cpx_vector_s *rn = node_cpx_vector (rv);
+
+  if (node_cpx_vector_cols (ln) ==
+      node_cpx_vector_cols (rn)) {
+    if (node_cpx_vector_max (ln) <
+	(node_cpx_vector_next (ln) + node_cpx_vector_next (rn))) {
+      node_cpx_vector_max (ln) += node_cpx_vector_next (rn);
+      node_cpx_vector_data (ln) =
+	realloc (node_cpx_vector_data (ln),
+		 node_cpx_vector_max (ln) * sizeof(gsl_complex));
+    }
+    memmove (&node_cpx_vector_data (ln)[node_cpx_vector_next (ln)],
+	     node_cpx_vector_data (rn),
+	     node_cpx_vector_next (rn) * sizeof(gsl_complex));
+    node_cpx_vector_next (ln) += node_cpx_vector_next (rn);
+    node_cpx_vector_rows (ln)++;
+    node_decref ((node_u)rn);
+  }
+  else {
+    // fixme dim mismatch
+  }
+  return lv;
+}
+
+node_u
 create_complex_vector_node ()
 {
   node_cpx_vector_s *node = malloc (sizeof(node_cpx_vector_s));

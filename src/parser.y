@@ -52,6 +52,8 @@ void yyerror (char const *);
 %type  <n> phrase
 %type  <n> modifier
 %type  <n> vector
+%type  <n> matrix
+%type  <n> matrices
 %type  <i> eof
 				
 %debug
@@ -111,7 +113,7 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 	| CLC_BIF modifier LEFT_PAREN phrase RIGHT_PAREN %prec MONADIC
 		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2, $4); }
 	| LEFT_PAREN phrase RIGHT_PAREN { $$ = $2; }
-	| LEFT_BRACKET vector RIGHT_BRACKET { $$ = $2; }
+	| matrix { $$ = $1; }
 	| SYMBOL LEFT_PAREN phrase RIGHT_PAREN { $$ = create_call ($1, $3); }
 	;
 
@@ -120,7 +122,15 @@ modifier : /* empty */ { $$ = NULL_NODE; }
 	 | LEFT_BRACE phrase RIGHT_BRACE { $$ = $2; }
 	 ;
 
-vector  : /* empty */
+matrix  : LEFT_BRACKET vector RIGHT_BRACKET { $$ = $2; }
+	| LEFT_BRACKET matrices RIGHT_BRACKET { $$ = $2; }
+	;
+
+matrices : matrix  { $$ = $1; }
+	 | matrices matrix { $$ = append_matrix ($1, $2); }
+	 ;
+
+vector  : /* NUMBER NUMBER */
 		{ $$ = create_complex_vector_node (); }
 	| vector NUMBER
 		{ $$ = append_complex_vector_node ($1, $2); }
