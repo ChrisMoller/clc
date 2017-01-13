@@ -121,9 +121,15 @@ do_range (node_u modifier, node_u la, node_u ra)
     if (ct > 0) {
       rc = create_complex_vector_node ();
       node_cpx_vector_s *dest = node_cpx_vector (rc);
+#if 1
+      node_cpx_vector_rhorho (dest) = 1;
+      node_cpx_vector_rho (dest) = malloc (sizeof(int));
+      node_cpx_vector_rho (dest)[0] = ct;
+#else
       node_cpx_vector_rows (dest) = 0;
-      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
-	node_cpx_vector_cols (dest) = ct;
+      node_cpx_vector_cols (dest) = ct;
+#endif
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = ct;
       node_cpx_vector_data (dest) =
 	malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
       for (int i =  0; i < ct; i++) {
@@ -131,6 +137,9 @@ do_range (node_u modifier, node_u la, node_u ra)
 	init = gsl_complex_add (init, incr);
       }
     }
+  }
+  else {
+    // fixme
   }
   return rc;
 }
@@ -169,8 +178,17 @@ clc_random (node_u modifier, node_u ra)
 	node_cpx_vector_s *vs = node_cpx_vector (rc);
 	node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 	  node_cpx_vector_next (rs);
+#if 1
+	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (rs);
+	      node_cpx_vector_rhorho (vs) =
+		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      memmove (node_cpx_vector_rho (vs),
+		       node_cpx_vector_rho (rs),
+		       node_cpx_vector_rhorho (vs) * sizeof(int));
+#else
 	node_cpx_vector_rows (vs) = node_cpx_vector_rows (rs);
 	node_cpx_vector_cols (vs) = node_cpx_vector_cols (rs);
+#endif
 	node_cpx_vector_data (vs) =
 	  malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	if (rt == RT_SEQ) {			// randomise sequence
@@ -757,8 +775,17 @@ do_eval (int *noshow, node_u node)
 	      node_cpx_vector_s *vs = node_cpx_vector (rc);
 	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		node_cpx_vector_next (rs);
+#if 1
+	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (rs);
+	      node_cpx_vector_rhorho (vs) =
+		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      memmove (node_cpx_vector_rho (vs),
+		       node_cpx_vector_rho (rs),
+		       node_cpx_vector_rhorho (vs) * sizeof(int));
+#else
 	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (rs);
 	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (rs);
+#endif
 	      node_cpx_vector_data (vs) =
 		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	      for (int i = 0; i < node_cpx_vector_next (rs); i++) {
@@ -778,9 +805,18 @@ do_eval (int *noshow, node_u node)
 	      rc = create_complex_vector_node ();
 	      node_cpx_vector_s *vs = node_cpx_vector (rc);
 	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
-		node_cpx_vector_next (ls);
+		node_cpx_vector_next (ls);;
+#if 1
+	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
+	      node_cpx_vector_rhorho (vs) =
+		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      memmove (node_cpx_vector_rho (vs),
+		       node_cpx_vector_rho (ls),
+		       node_cpx_vector_rhorho (vs) * sizeof(int));
+#else
 	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
 	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
+#endif
 	      node_cpx_vector_data (vs) =
 		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
@@ -807,8 +843,17 @@ do_eval (int *noshow, node_u node)
 		node_cpx_vector_s *vs = node_cpx_vector (rc);
 		node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		  node_cpx_vector_next (ls);
+#if 1
+		node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
+		node_cpx_vector_rhorho (vs) =
+		  node_cpx_vector_rhorho (vs) * sizeof(int);
+		memmove (node_cpx_vector_rho (vs),
+			 node_cpx_vector_rho (ls),
+			 node_cpx_vector_rhorho (vs) * sizeof(int));
+#else
 		node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
 		node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
+#endif
 		node_cpx_vector_data (vs) =
 		  malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 		for (int i = 0; i < node_cpx_vector_next (ls); i++) {
@@ -845,8 +890,17 @@ do_eval (int *noshow, node_u node)
 	      node_cpx_vector_s *vs = node_cpx_vector (rc);
 	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		node_cpx_vector_next (rs);
+#if 1
+	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (rs);
+	      node_cpx_vector_rhorho (vs) =
+		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      memmove (node_cpx_vector_rho (vs),
+		       node_cpx_vector_rho (rs),
+		       node_cpx_vector_rhorho (vs) * sizeof(int));
+#else
 	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (rs);
 	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (rs);
+#endif
 	      node_cpx_vector_data (vs) =
 		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	      for (int i = 0; i < node_cpx_vector_next (rs); i++) {
@@ -870,8 +924,17 @@ do_eval (int *noshow, node_u node)
 	      node_cpx_vector_s *vs = node_cpx_vector (rc);
 	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		node_cpx_vector_next (ls);
+#if 1
+	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
+	      node_cpx_vector_rhorho (vs) =
+		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      memmove (node_cpx_vector_rho (vs),
+		       node_cpx_vector_rho (ls),
+		       node_cpx_vector_rhorho (vs) * sizeof(int));
+#else
 	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
 	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
+#endif
 	      node_cpx_vector_data (vs) =
 		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
@@ -892,23 +955,48 @@ do_eval (int *noshow, node_u node)
 	      node_cpx_vector_s *ls = node_cpx_vector (la);
 	      if ((node_cpx_vector_next (ls) ==
 		   node_cpx_vector_next (rs)) &&
+#if 1
+		  (node_cpx_vector_rhorho (ls) ==
+		   node_cpx_vector_rhorho (rs))
+#else
 		  (node_cpx_vector_rows (ls) ==
 		   node_cpx_vector_rows (rs)) &&
 		  (node_cpx_vector_cols (ls) ==
-		   node_cpx_vector_cols (rs))) {
-		rc = create_complex_vector_node ();
-		node_cpx_vector_s *vs = node_cpx_vector (rc);
-		node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
-		  node_cpx_vector_next (ls);
-		node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
-		node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
-		node_cpx_vector_data (vs) =
-		  malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
-		for (int i = 0; i < node_cpx_vector_next (ls); i++) {
-		  gsl_complex rv = node_cpx_vector_data (rs)[i];
-		  gsl_complex lv = node_cpx_vector_data (ls)[i];
-		  gsl_complex vv = (*op)(lv, rv);
-		  node_cpx_vector_data (vs)[i] = vv;
+		   node_cpx_vector_cols (rs))
+#endif
+		  ) {
+		int p;
+		for (p = 0; p < node_cpx_vector_rhorho (rs); p++) {
+		  if (node_cpx_vector_rho (ls)[p] !=
+		      node_cpx_vector_rho (rs)[p]) break;
+		}
+		if (p == node_cpx_vector_rhorho (rs)) {
+		  rc = create_complex_vector_node ();
+		  node_cpx_vector_s *vs = node_cpx_vector (rc);
+		  node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+		    node_cpx_vector_next (ls);
+#if 1
+		  node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
+		  node_cpx_vector_rhorho (vs) =
+		    node_cpx_vector_rhorho (vs) * sizeof(int);
+		  memmove (node_cpx_vector_rho (vs),
+			   node_cpx_vector_rho (ls),
+			   node_cpx_vector_rhorho (vs) * sizeof(int));
+#else
+		  node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
+		  node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
+#endif
+		  node_cpx_vector_data (vs) =
+		    malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+		  for (int i = 0; i < node_cpx_vector_next (ls); i++) {
+		    gsl_complex rv = node_cpx_vector_data (rs)[i];
+		    gsl_complex lv = node_cpx_vector_data (ls)[i];
+		    gsl_complex vv = (*op)(lv, rv);
+		    node_cpx_vector_data (vs)[i] = vv;
+		  }
+		}
+		else {
+		  // fixme dim mismatch
 		}
 	      }
 	      else {
@@ -986,8 +1074,17 @@ do_eval (int *noshow, node_u node)
 	      node_cpx_vector_s *vs = node_cpx_vector (rc);
 	      node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 		node_cpx_vector_next (ls);
+#if 1
+	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
+	      node_cpx_vector_rhorho (vs) =
+		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      memmove (node_cpx_vector_rho (vs),
+		       node_cpx_vector_rho (ls),
+		       node_cpx_vector_rhorho (vs) * sizeof(int));
+#else
 	      node_cpx_vector_rows (vs) = node_cpx_vector_rows (ls);
 	      node_cpx_vector_cols (vs) = node_cpx_vector_cols (ls);
+#endif
 	      node_cpx_vector_data (vs) =
 		malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
 	      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
@@ -1060,7 +1157,12 @@ print_node (int indent, node_u node)
   case TYPE_CPX_VECTOR:
     {
       node_cpx_vector_s *vs = node_cpx_vector (node);
+#if 1
+      // fixme a lot
+      int cols = node_cpx_vector_rho (vs)[0];
+#else
       int cols = node_cpx_vector_cols (vs);
+#endif
       int i;
       fprintf (stdout, "%*s[ ", indent, " ");
       for (i = 0; i < node_cpx_vector_next (vs); i++) {

@@ -670,7 +670,6 @@ clc_catenate (node_u modifier, node_u lni, node_u rni)
   }
   else if (get_type (la) == TYPE_CPX_VECTOR &&
 	   get_type (ra) == TYPE_CPX_VECTOR ) {	// both vectors
-
     int axis = 0;
     if (get_type (mo) == TYPE_COMPLEX) {
       node_complex_s *mn = node_complex (mo);
@@ -678,6 +677,24 @@ clc_catenate (node_u modifier, node_u lni, node_u rni)
       axis = (int)lrint (GSL_REAL (mv));
     }
 
+#if 1
+    /***
+	a b c,{0} d e ==> a b c d e
+
+	a b c,[1] d e f ==> a b c
+	                    d e f
+
+	a b c             a b c g
+	d e f,{0) g h ==> d e f h
+
+	a b c               a b c
+	d e f,{1} g h i ==> d e f
+	                    g h i
+
+	a b c     g h      a b c g h
+	d e f,{0} i j  ==> d e f i j
+     ***/
+#else
     node_cpx_vector_s *ls = node_cpx_vector (la);
     node_cpx_vector_s *rs = node_cpx_vector (ra);
     int lrows = node_cpx_vector_rows (ls);
@@ -885,20 +902,32 @@ clc_catenate (node_u modifier, node_u lni, node_u rni)
 	}
       }
     }
+#endif
   }
   else if (get_type (la) == TYPE_CPX_VECTOR &&
 	   get_type (ra) == TYPE_COMPLEX ) {
     // ./clc -e '[4 5 6],7'
     node_cpx_vector_s *ls = node_cpx_vector (la);
     node_complex_s *rs = node_complex (ra);
+#if 0
     int lrows = node_cpx_vector_rows (ls);
-    if (lrows == 0) {
+#endif
+    if (node_cpx_vector_rhorho (ls) <= 1 /* lrows == 0 */) {
+#if 0
       int lcols = node_cpx_vector_cols (ls);
+#else
+      int lcols = node_cpx_vector_next (ls);
+#endif
       rc = create_complex_vector_node ();
       node_cpx_vector_s *dest = node_cpx_vector (rc);
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = lcols + 1;
+#if 1
+      if (node_cpx_vector_rhorho (ls) == 1)
+	node_cpx_vector_rho (ls)[0] = lcols + 1;
+#else
       node_cpx_vector_rows (dest) = 0;
-      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
-	node_cpx_vector_cols (dest) = lcols + 1;
+      node_cpx_vector_cols (dest) = lcols + 1;
+#endif
       node_cpx_vector_data (dest) =
 	malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
       memmove (node_cpx_vector_data (dest),
@@ -914,14 +943,25 @@ clc_catenate (node_u modifier, node_u lni, node_u rni)
     // ./clc -e '7,[4 5 6]'
     node_complex_s *ls = node_complex (la);
     node_cpx_vector_s *rs = node_cpx_vector (ra);
+#if 0
     int rrows = node_cpx_vector_rows (rs);
-    if (rrows == 0) {
+#endif
+    if (node_cpx_vector_rhorho (rs) <= 1 /* rrows == 0*/) {
+#if 0
       int rcols = node_cpx_vector_cols (rs);
+#else
+      int rcols = node_cpx_vector_next (rs);
+#endif
       rc = create_complex_vector_node ();
       node_cpx_vector_s *dest = node_cpx_vector (rc);
+      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = rcols + 1;
+#if 1
+      if (node_cpx_vector_rhorho (rs) == 1)
+	node_cpx_vector_rho (rs)[0] = rcols + 1;
+#else
+      node_cpx_vector_cols (dest) = rcols + 1;
       node_cpx_vector_rows (dest) = 0;
-      node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
-	node_cpx_vector_cols (dest) = rcols + 1;
+#endif
       node_cpx_vector_data (dest) =
 	malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
       node_cpx_vector_data (dest)[0] = node_complex_value(ls);
@@ -940,9 +980,15 @@ clc_catenate (node_u modifier, node_u lni, node_u rni)
     gsl_complex rv = node_complex_value(rs);
     rc = create_complex_vector_node ();
     node_cpx_vector_s *dest = node_cpx_vector (rc);
+#if 1
+    node_cpx_vector_rhorho (dest) = 1;
+    node_cpx_vector_rho (dest) = malloc (sizeof(int));
+    node_cpx_vector_rho (dest)[0] = 2;
+#else
     node_cpx_vector_rows (dest) = 0;
-    node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
-      node_cpx_vector_cols (dest) = 2;
+    node_cpx_vector_cols (dest) = 2;
+#endif
+    node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = 2;
     node_cpx_vector_data (dest) =
 	    malloc (node_cpx_vector_max (dest) * sizeof(gsl_complex));
     node_cpx_vector_data (dest)[0] = lv;
