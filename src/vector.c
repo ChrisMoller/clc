@@ -679,20 +679,111 @@ clc_catenate (node_u modifier, node_u lni, node_u rni)
 
 #if 1
     /***
-	a b c,{0} d e ==> a b c d e
+ppL = 1          ppR = 1    ppV = 1       ppL = ppR && m < ppL 
+pL =  3          pR  = 2    pV  = 5       pL[i != m] = pR
+	a b c,{0} d e ==> a b c d e           ppV = ppL
+	                                      pV[m] = pL[m] + pR[m]
+					      pV[i != m] = pL
 
-	a b c,[1] d e f ==> a b c
-	                    d e f
+ppL = 1          ppR = 1    ppV = 2       ppL = ppR = m
+pL  = 3          pR  = 3    pV  = 2 3     pL = pR
+	a b c,[1] d e f ==> a b c             ppV = ppL + 1
+	                    d e f             pV  = 2, pL
 
-	a b c             a b c g
-	d e f,{0) g h ==> d e f h
+ppL = 2          ppR = 1    ppV = 2       ppL = ppR + 1 && m < ppL
+pL  = 2 3        pR  = 2    pV  = 2 4     pL[i != m] = pR
+	a b c             a b c g             ppV = ppL
+	d e f,{0) g h ==> d e f h             pV = pL, pV[m] = pL[m] + 1
 
-	a b c               a b c
-	d e f,{1} g h i ==> d e f
+ppL = 2          ppR = 1    ppV = 2       ppL = ppR + 1 && m < ppL
+pL  = 2 3        pR  = 3    pV  = 3 3     pL[i != m] = pR
+	a b c               a b c             ppV = ppL
+	d e f,{1} g h i ==> d e f             pV = pL, pV[m] = pL[m] + 1
 	                    g h i
 
-	a b c     g h      a b c g h
-	d e f,{0} i j  ==> d e f i j
+ppL = 2          ppR = 2    ppV = 2       ppL = ppR && m < ppL
+pL  = 2 3        pR  = 2 2  pV  = 2 5     pL[i != m] = pR
+	a b c     g h      a b c g h          ppV = ppL
+	d e f,{0} i j  ==> d e f i j          pV[m] = pL[m] + pR[m]
+	                                      pV[i != m] = pL
+
+ppL = 2          ppR = 2    ppV = 2       ppL = ppR && m < ppL
+pL  2 3          pR  = 3 3  pV  = 5 3     pL[i != m] = pR
+	a b c     g h i     a b c             ppV = ppL
+	d e f,{1} j k l ==> d e f             pV[m] = pL[m] + pR[m]
+                  m n o     g h i             pV[i != m] = pL
+			    j k l
+	                    m n o
+
+ppL = 2          ppR = 2     ppV = 3       ppL = ppR = m
+Pl  = 2 3        pR  = 2 3   pV  = 2 3     pL = pR
+	a b c     g h i      a b c             ppV = ppL + 1
+	d e f,{2} j k l ==>  d e f             pV  = 2, pL
+
+	                     g h i
+			     j k l
+
+ppL = 3         ppR = 2    ppV = 3         ppL = ppR + 1 && m < ppL
+pL  = 2 4 3     pR  = 2 4  pV  = 2 4 4     pL[i != m] = pR
+	a b c                 a b c 0          ppV = ppL
+	d e f                 d e f 1          pV = pL, pV[m] = pL[m] + 1
+	g h i                 g h i 2
+	j k l     0 1 2 3     j k l 3
+             ,{0} 4 5 6 7 ==> 
+	m n o                 m n o 4
+	p q r                 p q r 5
+	s t u                 s t u 6
+	v w x                 v w x 7
+
+ppL = 3        ppR = 2      ppV = 3         ppL = ppR + 1 && m < ppL
+Pl  = 2 4 3    pR  = 2 3    pV  = 2 5 3     pL[i != m] = pR
+	a b c               a b c                ppV = ppL
+	d e f               d e f                pV = pL, pV[m] = pL[m] + 1
+	g h i               g h i
+	j k l     0 1 2     j k l
+             ,{1} 3 4 5 ==> 0 1 2
+	m n o
+	p q r               m n o
+	s t u               p q r
+	v w x               s t u
+	                    v w x
+                            3 4 5
+
+ppL = 3        ppR = 2     ppV = 3         ppL = ppR + 1 && m < ppL
+pL  = 2 4 3    pR  = 4 3   pV  = 3 4 3     pL[i != m] = pR
+	a b c               a b c                ppV = ppL
+	d e f               d e f                pV = pL, pV[m] = pL[m] + 1
+	g h i     0 1 2     g h i
+	j k l     3 4 5     j k l
+             ,{2} 6 7 8 ==> 
+	m n o     9 y z     m n o
+	p q r               p q r
+	s t u               s t u
+	v w x               v w x
+
+	                    0 1 2
+			    3 4 5
+			    6 7 8
+			    9 y z
+
+
+   ppL = ppR = m
+   pL = pR
+       ppV = ppL + 1
+       pV  = 2, pL
+
+   ppL = ppR && m < ppL 
+   pL[i != m] = pR
+       ppV = ppL
+       pV[m] = pL[m] + pR[m]
+	      pV[i != m] = pL
+
+   ppL = ppR + 1 && m < ppL
+   pL[i != m] = pR
+       ppV = ppL
+       pV = pL, pV[m] = pL[m] + 1
+  
+			    
      ***/
 #else
     node_cpx_vector_s *ls = node_cpx_vector (la);
