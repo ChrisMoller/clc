@@ -141,6 +141,7 @@ node_decref (node_u node)
 node_u
 append_matrix (node_u lv, node_u rv)
 {
+#if 0
   node_cpx_vector_s *ln = node_cpx_vector (lv);
   node_cpx_vector_s *rn = node_cpx_vector (rv);
 
@@ -163,6 +164,7 @@ append_matrix (node_u lv, node_u rv)
   else {
     // fixme dim mismatch
   }
+#endif
   return lv;
 }
 
@@ -172,8 +174,13 @@ create_complex_vector_node ()
   node_cpx_vector_s *node = malloc (sizeof(node_cpx_vector_s));
   node_refcnt (node) = 0;
   node_cpx_vector_type (node) = TYPE_CPX_VECTOR;
+#if 1
+  node_cpx_vector_rhorho (node) = 0;
+  node_cpx_vector_rho (node) = NULL;
+#else
   node_cpx_vector_rows (node) = 0;
   node_cpx_vector_cols (node) = 0;
+#endif
   node_cpx_vector_max  (node) = 0;
   node_cpx_vector_next (node) = 0;
   node_cpx_vector_data (node) = NULL;
@@ -188,15 +195,26 @@ append_complex_vector_node (node_u vector, gsl_complex v)
 {
   if (get_type (vector) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *node = node_cpx_vector (vector);
-    if (node_cpx_vector_max (node) <= node_cpx_vector_next (node)) {
-      node_cpx_vector_max (node) += NODE_CPX_VECTOR_INCR;
-      node_cpx_vector_data (node) =
-	realloc (node_cpx_vector_data (node),
-		 node_cpx_vector_max (node) * sizeof(gsl_complex));
+    if (node_cpx_vector_rhorho (node) == 0) {
+      node_cpx_vector_rhorho (node) = 1;
+      node_cpx_vector_rho (node) = malloc (sizeof(int));;
+      node_cpx_vector_rho (node)[0] = 0;
     }
-    node_cpx_vector_data (node)[node_cpx_vector_next (node)++] = v;
-    node_cpx_vector_rows (node) = 0;
-    node_cpx_vector_cols (node)++;
+    if (node_cpx_vector_rhorho (node) == 1) {
+      if (node_cpx_vector_max (node) <= node_cpx_vector_next (node)) {
+	node_cpx_vector_max (node) += NODE_CPX_VECTOR_INCR;
+	node_cpx_vector_data (node) =
+	  realloc (node_cpx_vector_data (node),
+		   node_cpx_vector_max (node) * sizeof(gsl_complex));
+      }
+      node_cpx_vector_data (node)[node_cpx_vector_next (node)++] = v;
+#if 1
+      node_cpx_vector_rho (node)[0]++;
+#else
+      node_cpx_vector_rows (node) = 0;
+      node_cpx_vector_cols (node)++;
+#endif
+    }
     return (node_u)node;
   }
   return vector;
@@ -299,6 +317,7 @@ free_node (node_u node)
       node_cpx_vector_s *vs = node_cpx_vector (node);
       if (vs) {
 	if (node_cpx_vector_data (vs)) free (node_cpx_vector_data (vs));
+	if (node_cpx_vector_rho (vs))  free (node_cpx_vector_rho (vs));
 	free (vs);
       }
     }

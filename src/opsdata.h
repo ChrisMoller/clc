@@ -63,7 +63,7 @@
 	 2, 1, "assign", NULL),
   ENTRY ("#", SYM_POUND,	clc_reshape,		clc_shape,
 	 2, 1, "reshape", "shape"),
-  ENTRY ("><", SYM_GTLT,	clc_matrix_mul,		clc_transpose,
+  ENTRY ("><", SYM_GTLT,	clc_matrix_mul,	clc_transpose,
 	 2, 1, "matrix multiply",      "transpose"),
   ENTRY ("<>", SYM_LTGT,	clc_extract,		NULL,
 	 2, 1, "vector extract",      NULL),

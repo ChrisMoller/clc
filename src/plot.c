@@ -444,8 +444,13 @@ clc_plot (node_u modifier, node_u argi)
   double max_y = MINDOUBLE;
   if (get_type (arg) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *ls = node_cpx_vector (arg);
+#if 1
+    int lrows = 0;
+    int lcols = 0;
+#else
     int lrows = node_cpx_vector_rows (ls);
     int lcols = node_cpx_vector_cols (ls);
+#endif
     if (lrows <= 1) {			// just a simple plot
       // ./clc 'plot {bgcolour = "purple"} (sin(::{.2}30))'
       if (lcols > 1) {

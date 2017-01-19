@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_complex_math.h>
@@ -1150,19 +1151,51 @@ do_eval (int *noshow, node_u node)
   return rc;
 }
 
+
+static void
+print_indices (int rhorho, int *ix)
+{
+  int i;
+  printf ("\n[");
+  for (i = rhorho - 1; i >= 2; i--) printf ("%d ", ix[i]);
+  printf (" * *]\n");
+}
+
 void
 print_node (int indent, node_u node)
 {
   switch(get_type (node)) {
   case TYPE_CPX_VECTOR:
     {
-      node_cpx_vector_s *vs = node_cpx_vector (node);
 #if 1
+      node_cpx_vector_s *vs = node_cpx_vector (node);
+      int rhorho = node_cpx_vector_rhorho (vs);
+      int *rhop = node_cpx_vector_rho (vs);
+      gsl_complex *datap = node_cpx_vector_data (vs);
+      int ct = node_cpx_vector_next (vs);
+      int *ix = alloca (rhorho * sizeof(int));
+      bzero (ix, rhorho * sizeof(int));
+      int i, k;
+      for (i = 0; i < ct; i++) {
+	if (rhorho > 2 && ix[0] == 0 && ix[1] == 0)
+	  print_indices (rhorho, ix);
+	printf ("%R ", datap[i]);
+	if (ix[0] == rhop[0] - 1)	printf ("\n");
+	int carry = 1;
+	for (k = 0; carry && k < rhorho; k++) {
+	  if (carry) {
+	    if (++ix[k] >= rhop[k]) ix[k] = 0;
+	    else {
+	      carry = 0;
+	      break;
+	    }
+	  }
+	}
+      }
+#else
       // fixme a lot
       int cols = node_cpx_vector_rho (vs)[0];
-#else
       int cols = node_cpx_vector_cols (vs);
-#endif
       int i;
       fprintf (stdout, "%*s[ ", indent, " ");
       for (i = 0; i < node_cpx_vector_next (vs); i++) {
@@ -1174,6 +1207,7 @@ print_node (int indent, node_u node)
 	  fprintf (stdout, "%*s\n  ", indent+2, " ");
       }
       fprintf (stdout, "]\n");
+#endif
     }
     break;
   case TYPE_COMPLEX:
