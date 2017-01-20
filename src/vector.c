@@ -571,7 +571,8 @@ build_vec (int len, node_cpx_vector_s *rs)
 #if 1
   node_cpx_vector_rhorho (vs) = 1;
   node_cpx_vector_rho (vs) = malloc (sizeof(int));
-  node_cpx_vector_next (rs) = node_cpx_vector_rho (vs)[0] = len;
+  node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
+    node_cpx_vector_rho (vs)[0] = len;
 #else
   node_cpx_vector_rows (vs) = 0;
   if (rows == 0) {
@@ -696,6 +697,7 @@ clc_reshape (node_u modifier, node_u lni, node_u rni)
 	node_cpx_vector_s *rs = node_cpx_vector (ra);
 	gsl_complex lv = node_complex_value (ls);
 	int cols = (int)lrint (GSL_REAL (lv));
+	if (cols == 0) cols = node_cpx_vector_next (rs);
 	rc = build_vec (cols, rs);
       }
       break;
@@ -819,17 +821,25 @@ clc_shape (node_u modifier, node_u argi)
     {
       node_cpx_vector_s *ls = node_cpx_vector (la);
 #if 1
-      rc = create_complex_vector_node ();
-      node_cpx_vector_s *vs = node_cpx_vector (rc);
-      node_cpx_vector_rhorho (vs) = 1;
-      node_cpx_vector_rho (vs) = malloc (sizeof(int));
-      node_cpx_vector_max (vs) = node_cpx_vector_next (vs) = 
-	node_cpx_vector_rho (vs)[0] = node_cpx_vector_rhorho (ls);
-      node_cpx_vector_data (vs) =
-	malloc (node_cpx_vector_max (vs) * sizeof(int));
-      memcpy (node_cpx_vector_data (vs),
-	       node_cpx_vector_rho (ls),
-	       node_cpx_vector_max (vs) * sizeof(int));
+      if (node_cpx_vector_rhorho (ls) == 1) {
+	double len = (double)node_cpx_vector_rho (ls)[0];
+	gsl_complex cv = gsl_complex_rect (len, 0.0);
+	rc = create_complex_node (0, cv);
+      }
+      else {
+	rc = create_complex_vector_node ();
+	node_cpx_vector_s *vs = node_cpx_vector (rc);
+	node_cpx_vector_rhorho (vs) = 1;
+	node_cpx_vector_rho (vs) = malloc (sizeof(int));
+	node_cpx_vector_max (vs) = node_cpx_vector_next (vs) = 
+	  node_cpx_vector_rho (vs)[0] = node_cpx_vector_rhorho (ls);
+	node_cpx_vector_data (vs) =
+	  malloc (node_cpx_vector_max (vs) * sizeof(gsl_complex));
+	for(int i = 0; i < node_cpx_vector_max (vs); i++) {
+	  double len = (double)node_cpx_vector_rho (ls)[i];
+	  node_cpx_vector_data (vs)[i] = gsl_complex_rect (len, 0.0);
+	}
+      }
 #else
       int rows = node_cpx_vector_rows (ls);
       int cols = node_cpx_vector_cols (ls);

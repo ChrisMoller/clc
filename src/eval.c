@@ -778,8 +778,8 @@ do_eval (int *noshow, node_u node)
 		node_cpx_vector_next (rs);
 #if 1
 	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (rs);
-	      node_cpx_vector_rhorho (vs) =
-		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      node_cpx_vector_rho (vs) =
+		malloc (node_cpx_vector_rhorho (vs) * sizeof(int));
 	      memmove (node_cpx_vector_rho (vs),
 		       node_cpx_vector_rho (rs),
 		       node_cpx_vector_rhorho (vs) * sizeof(int));
@@ -809,8 +809,8 @@ do_eval (int *noshow, node_u node)
 		node_cpx_vector_next (ls);;
 #if 1
 	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
-	      node_cpx_vector_rhorho (vs) =
-		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      node_cpx_vector_rho (vs) =
+		malloc (node_cpx_vector_rhorho (vs) * sizeof(int));
 	      memmove (node_cpx_vector_rho (vs),
 		       node_cpx_vector_rho (ls),
 		       node_cpx_vector_rhorho (vs) * sizeof(int));
@@ -846,8 +846,8 @@ do_eval (int *noshow, node_u node)
 		  node_cpx_vector_next (ls);
 #if 1
 		node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
-		node_cpx_vector_rhorho (vs) =
-		  node_cpx_vector_rhorho (vs) * sizeof(int);
+		node_cpx_vector_rho (vs) =
+		  malloc (node_cpx_vector_rhorho (vs) * sizeof(int));
 		memmove (node_cpx_vector_rho (vs),
 			 node_cpx_vector_rho (ls),
 			 node_cpx_vector_rhorho (vs) * sizeof(int));
@@ -893,8 +893,8 @@ do_eval (int *noshow, node_u node)
 		node_cpx_vector_next (rs);
 #if 1
 	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (rs);
-	      node_cpx_vector_rhorho (vs) =
-		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      node_cpx_vector_rho (vs) =
+		malloc (node_cpx_vector_rhorho (vs) * sizeof(int));
 	      memmove (node_cpx_vector_rho (vs),
 		       node_cpx_vector_rho (rs),
 		       node_cpx_vector_rhorho (vs) * sizeof(int));
@@ -927,8 +927,8 @@ do_eval (int *noshow, node_u node)
 		node_cpx_vector_next (ls);
 #if 1
 	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
-	      node_cpx_vector_rhorho (vs) =
-		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      node_cpx_vector_rho (vs) =
+		malloc (node_cpx_vector_rhorho (vs) * sizeof(int));
 	      memmove (node_cpx_vector_rho (vs),
 		       node_cpx_vector_rho (ls),
 		       node_cpx_vector_rhorho (vs) * sizeof(int));
@@ -978,8 +978,8 @@ do_eval (int *noshow, node_u node)
 		    node_cpx_vector_next (ls);
 #if 1
 		  node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
-		  node_cpx_vector_rhorho (vs) =
-		    node_cpx_vector_rhorho (vs) * sizeof(int);
+		  node_cpx_vector_rho (vs) =
+		    malloc (node_cpx_vector_rhorho (vs) * sizeof(int));
 		  memmove (node_cpx_vector_rho (vs),
 			   node_cpx_vector_rho (ls),
 			   node_cpx_vector_rhorho (vs) * sizeof(int));
@@ -1077,8 +1077,8 @@ do_eval (int *noshow, node_u node)
 		node_cpx_vector_next (ls);
 #if 1
 	      node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (ls);
-	      node_cpx_vector_rhorho (vs) =
-		node_cpx_vector_rhorho (vs) * sizeof(int);
+	      node_cpx_vector_rho (vs) =
+		malloc (node_cpx_vector_rhorho (vs) * sizeof(int));
 	      memmove (node_cpx_vector_rho (vs),
 		       node_cpx_vector_rho (ls),
 		       node_cpx_vector_rhorho (vs) * sizeof(int));
