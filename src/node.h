@@ -171,30 +171,16 @@ struct _node_call_type {
 struct _node_cpx_vector_type {
   type_e	 type;
   int		 refcnt;
-#if 1
   int		 rhorho;
   int		*rho;
-#else
-  int		 rows;
-  int		 cols;
-#endif
   int		 max;
   int		 next;
   gsl_complex	*data;
 };
 #define node_cpx_vector_type(n)	((n)->type)
 #define node_cpx_vector_refcnt(n)	((n)->refcnt)
-#if 1
 #define node_cpx_vector_rhorho(n)	((n)->rhorho)
 #define node_cpx_vector_rho(n)		((n)->rho)
-#if 0
-#define node_cpx_vector_rows(n)	((n)->rho[1])
-#define node_cpx_vector_cols(n)	((n)->rho[0])
-#endif
-#else
-#define node_cpx_vector_rows(n)	((n)->rows)
-#define node_cpx_vector_cols(n)	((n)->cols)
-#endif
 #define node_cpx_vector_max(n)	((n)->max)
 #define node_cpx_vector_next(n)	((n)->next)
 #define node_cpx_vector_data(n)	((n)->data)

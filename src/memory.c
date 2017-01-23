@@ -174,13 +174,8 @@ create_complex_vector_node ()
   node_cpx_vector_s *node = malloc (sizeof(node_cpx_vector_s));
   node_refcnt (node) = 0;
   node_cpx_vector_type (node) = TYPE_CPX_VECTOR;
-#if 1
   node_cpx_vector_rhorho (node) = 0;
   node_cpx_vector_rho (node) = NULL;
-#else
-  node_cpx_vector_rows (node) = 0;
-  node_cpx_vector_cols (node) = 0;
-#endif
   node_cpx_vector_max  (node) = 0;
   node_cpx_vector_next (node) = 0;
   node_cpx_vector_data (node) = NULL;
@@ -208,12 +203,7 @@ append_complex_vector_node (node_u vector, gsl_complex v)
 		   node_cpx_vector_max (node) * sizeof(gsl_complex));
       }
       node_cpx_vector_data (node)[node_cpx_vector_next (node)++] = v;
-#if 1
       node_cpx_vector_rho (node)[0]++;
-#else
-      node_cpx_vector_rows (node) = 0;
-      node_cpx_vector_cols (node)++;
-#endif
     }
     return (node_u)node;
   }
