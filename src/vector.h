@@ -10,5 +10,6 @@ node_u clc_ravel (node_u modifier, node_u arg);
 node_u clc_transpose (node_u modifier, node_u arg);
 node_u clc_sigma (node_u modifier, node_u arg);
 node_u clc_pi (node_u modifier, node_u arg);
+node_u do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo);
 
 #endif  /* VECTOR_H */

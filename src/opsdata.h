@@ -108,4 +108,6 @@
   ENTRY ("exp", SYM_EXP,	NULL,			gsl_complex_exp,
 	 0, 1, NULL, "exp"),
   ENTRY (NULL, SYM_COUNT,	NULL,			NULL,
+	 0, 0, NULL, NULL),
+  ENTRY (NULL, SYM_NULL,	NULL,			NULL,
 	 0, 0, NULL, NULL)

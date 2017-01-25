@@ -127,6 +127,7 @@ ln              { yylval.d = SYM_LN;     return BIF; }
 \=		{ yylval.d = SYM_EQUAL;  return ASSIGN; }
 \?		{ yylval.d = SYM_QMARK;  return RIGHT_CLC_DYADIC; }
 
+\\              return BACKSLASH;
 \(		return LEFT_PAREN;
 \)		return RIGHT_PAREN;
 \[		return LEFT_BRACKET;

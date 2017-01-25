@@ -272,6 +272,22 @@ create_monadic_node (sym_e op, op_type_e op_type,
   return (node_u)node;
 }
 
+node_u
+create_composite_node (node_u la, sym_e lop, sym_e rop,
+		       node_u modifier, node_u ra)
+{
+  node_composite_s *node = malloc (sizeof(node_composite_s));
+  node_refcnt (node) = 0;
+  node_composite_type (node) = TYPE_COMPOSITE;
+  node_composite_la (node) = la;
+  node_composite_left_op (node)  = lop;
+  node_composite_right_op (node) = rop;
+  node_composite_modifier (node) = modifier;
+  node_composite_ra (node) = ra;
+  
+  return (node_u)node;
+}
+
 void
 create_function (const char *name, node_u params, node_u body)
 {
@@ -362,6 +378,8 @@ free_node (node_u node)
 	free (monad);
       }
     }
+    break;
+  case TYPE_COMPOSITE:
     break;
   case TYPE_COMPLEX:
     {

@@ -18,97 +18,151 @@
 #include "eval.h"
 #include "printext.h"
 
-/***
-
-
-    A B C   U X   (AU + BV + CW)  (AX + BY + CZ)
-    D E F * V y = (DU + EV + FW)  (DX + EY + FZ)
-            W Z
-
-    A = Aa Ab   B = Ba Bb   C = Ca Cb
-        Ac Ad       Bc Bd       Cc Cd
-
-    D = Da Db   E = Ea Eb   F = Fa Fb
-        Dc Dd       Ec Ed       Fc Fd
-
-	                 U = Ua Ub   X = Xa Xb
-	                     Uc Ud       Xc Xd
-
-			 V = Va Vb   Y = Ya Yb
-			     Vc Vd       Yc Td
-
-			 W = Wa Wb   Z = Za Zb
-			     Wc Wd       Zc Zd
-
-    A [2 3 4] = [a b]
-
-    a =     
- 1  2  3  4
- 5  6  7  8
- 9 10 11 12
-
-    b =
-13 14 15 16
-17 18 19 20
-21 22 23 24
-
-
-    B [4 3 2] = [c d]
-    b:   [4 3 2]
-
- 1  2    [ 0 0 0]  [0 0 1]
- 3  4    [ 0 1 0]  [0 1 1]
- 5  6    [ 0 2 0]
-
- 7  8    [ 1 0 0]
- 9 10    [ 1 1 0]
-11 12    [ 1 2 0]
-
-13 14    [ 2 0 0]
-15 16    [ 2 1 0]
-17 18    [ 2 2 0]
-
-19 20    [ 3 0 0]
-21 22    [ 3 1 0]
-23 24    [ 3 2 0]
-
-
-
-   c:   [2 3 3 2]
-
- 130  140	c[0;0;0;0]   c[0;0;0;1]
- 150  160       c[0;0;1;0]   c[0;0;1;1]
- 170  180       c[0;0;2;0]   c[0;0;2;1]
-
- 290  316
- 342  368
- 394  420
-
- 450  492
- 534  576
- 618  660
-
-
- 610  668
- 726  784
- 842  900
-
- 770  844
- 918  992
-1066 1140
-
- 930 1020
-1110 1200
-1290 1380
-
-
- ***/
-
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)
 	  
 #define dest_offset(r,c)  (((r) * node_cpx_vector_cols (dest)) + c)
 #define src_offset(s,r,c)  (((r) * (s)) + c)
+
+node_u
+do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
+{
+  
+/***
+    
+    -----------------------
+    
+    pA = 4 2, pB = 2 7 ==> pC = 4 7
+    
+    ------------------------
+
+    a: pA = 2 5 4
+
+1  2  3  4
+5  6  7  8
+9 10 11 12
+1  2  3  4
+5  6  7  8
+
+9 10 11 12
+1  2  3  4
+5  6  7  8
+9 10 11 12
+1  2  3  4
+
+    b: pB = 4 3 2
+
+1 2
+3 4
+5 6
+
+7 8
+1 2
+3 4
+
+5 6
+7 8
+1 2
+
+3 4
+5 6
+7 8
+
+
+
+    ip pC = 2 5 3 2
+
+                                               c[i j k l] = (a[i j *] +\* b[* k l])
+
+ 42  52  c[0 0 0 0] = (a[0 0 *] +\* b[* 0 0])  c[0 0 0 1] = (a[0 0 *] +\* b[* 0 1])
+ 46  56  c[0 0 1 0] = (a[0 0 *] +\* b[* 1 0])  c[0 0 1 1] = (a[0 0 *] +\* b[* 1 1])
+ 42  52  c[0 0 2 0] = (a[0 0 *] +\* b[* 2 0])  c[0 0 2 1] = (a[0 0 *] +\* b[* 2 1])
+
+106 132  c[0 1 0 0]
+110 136  c[0 1 1 0]
+106 132  c[0 1 2 0]
+
+170 212  c[0 2 0 0] 
+174 216  c[0 2 1 0]
+170 212  c[0 2 2 0]
+
+ 42  52  c[0 3 0 0]
+ 46  56  c[0 3 1 0]
+ 42  52  c[0 3 2 0]
+
+106 132  c[0 4 0 0]
+110 136  c[0 4 1 0]
+106 132  c[0 4 2 0]
+
+
+170 212
+174 216
+170 212
+
+ 42  52
+ 46  56
+ 42  52
+
+106 132
+110 136
+106 132
+
+170 212
+174 216
+170 212
+
+ 42  52  c[1 4 0 0]
+ 46  56  c[1 4 1 0]
+ 42  52  c[1 4 2 0] =  c[1 4 2 1] = (a[1 4 *] +\* b[* 2 1])
+
+
+    pA[last] = pB[first]
+                                      ------------ pA[first]
+                                      |  --------- pA[middle]
+				      |  |  -------pB[middle]
+                                      |  |  |  --- pB[last]
+                                      | --- | |
+    pA = 2 3 5 7, pB = 7 6 4 ==> pC = 2 3 5 6 4
+      
+    
+ ***/
+  
+  node_u rc = NULL_NODE;
+  node_cpx_vector_s *ls = node_cpx_vector (la);
+  node_cpx_vector_s *rs = node_cpx_vector (ra);
+  int  lrhorho = node_cpx_vector_rhorho (ls);
+  int  rrhorho = node_cpx_vector_rhorho (rs);
+  int *lrho    = node_cpx_vector_rho (ls);
+  int *rrho    = node_cpx_vector_rho (rs);
+  int  crhorho = lrhorho + rrhorho - 2;
+  int *crho    = malloc (crhorho * sizeof(int));
+  if (lrho[lrhorho -1] == rrho[0]) {
+    crho[0] = lrho[0];
+    crho[crhorho - 1] = rrho[rrhorho - 1];
+    int p = 1;
+    if (lrhorho >= 3) 
+      for (int i = 1; i < lrhorho - 1; i++) crho[p++] = lrho[i];
+    if (rrhorho >= 3) 
+      for (int i = 1; i < rrhorho - 1; i++) crho[p++] = rrho[i];
+    
+    printf ("lrhorho = %d, lrho = ", lrhorho);
+    for (int i = 0; i < lrhorho; i++) printf ("%d ", lrho[i]);
+    printf ("\n");
+    
+    printf ("rrhorho = %d, rrho = ", rrhorho);
+    for (int i = 0; i < rrhorho; i++) printf ("%d ", rrho[i]);
+    printf ("\n");
+    
+    printf ("crhorho = %d, rho = ", crhorho);
+    for (int i = 0; i < crhorho; i++) printf ("%d ", crho[i]);
+    printf ("\n");
+  }
+  else {
+    // fixme dim mismatch
+  }
+  
+  return rc;
+}
 
 node_u
 clc_sigma (node_u modifier, node_u argi)

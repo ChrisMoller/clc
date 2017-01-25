@@ -509,6 +509,7 @@ clc_assign (node_u modifier, node_u la, node_u ra)
   case TYPE_CPX_VECTOR:
   case TYPE_DYADIC:
   case TYPE_MONADIC:
+  case TYPE_COMPOSITE:
   case TYPE_CALL:
     // err unassignable
     break;
@@ -652,12 +653,63 @@ flatten (node_list_s **list_p, node_u node)
 }
 
 node_u
+do_composite (int *noshow, node_u node)
+{
+  /***
+      https://en.wikipedia.org/wiki/Tensor_contraction
+
+      
+      a +\* b		inner
+      a  \* b		outer
+         \* b		scanner
+   ***/
+  node_u rc = NULL_NODE;
+  node_composite_s *comp = node_composite (node);
+  node_u la = do_eval (NULL, node_composite_la (comp));
+  node_u ra = do_eval (NULL, node_composite_ra (comp));
+  node_u mo = do_eval (NULL, node_composite_modifier (comp));
+
+  if (get_type (ra) == TYPE_CPX_VECTOR) {
+    sym_e lsym = node_composite_left_op (comp);
+    sym_e rsym = node_composite_right_op (comp);
+    if (rsym != SYM_NULL) {
+      if (lsym == SYM_NULL) {				// outer or scanner
+	if (get_type (la) == TYPE_CPX_VECTOR) {		// outer
+	  printf ("outer rsym = %d\n", rsym);
+	}
+	else {						// scanner
+	  printf ("scanner rsym = %d\n", rsym);
+	}
+      }
+      else {						// inner op
+	if (get_type (la) == TYPE_CPX_VECTOR) {
+	  rc = do_inner (lsym, rsym, la, ra, mo);
+	}
+	else {
+	  // fixme missing arg
+	}
+      }
+    }
+    {
+      // fixme -- bad rsym
+    }
+  }
+  else {
+    // fixme bad ra
+  }
+  return rc;
+}
+
+node_u
 do_eval (int *noshow, node_u node)
 {
   if (noshow) *noshow = 0;
   node_u rc = NULL_NODE;
   switch(get_type (node)) {
   case TYPE_NULL:
+    break;
+  case TYPE_COMPOSITE:
+    rc = do_composite (noshow, node);
     break;
   case TYPE_CALL:
     {
@@ -740,7 +792,7 @@ do_eval (int *noshow, node_u node)
       node_u la = node_dyadic_la (dyad);
       if (sym != SYM_EQUAL || get_type (la) != TYPE_SYMBOL)
 	  la = do_eval (NULL, la);
-      node_u modifier = node_dyadic_modifier (dyad);
+      node_u modifier = do_eval (NULL, node_dyadic_modifier (dyad));
       op_type_e op_type = node_dyadic_op_type (dyad);
 
 
@@ -1009,7 +1061,7 @@ do_eval (int *noshow, node_u node)
       node_u arg = do_eval (NULL, node_monadic_arg (monad));
       sym_e sym = node_monadic_op (monad);
       op_type_e op_type = node_monadic_op_type (monad);
-      node_u modifier = node_monadic_modifier (monad);
+      node_u modifier = do_eval (NULL, node_monadic_modifier (monad));
 
       if (op_type == OP_TYPE_CLC) {
 	clc_monadic op = op_monadic (sym);
@@ -1185,8 +1237,10 @@ print_node (int indent, node_u node)
     }
     break;
   case TYPE_MONADIC:
+  case TYPE_COMPOSITE:
   case TYPE_FUNCTION:
   case TYPE_CALL:
+    // fixme
     break;
   }
 }

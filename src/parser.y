@@ -49,6 +49,7 @@ void yyerror (char const *);
 %token     RIGHT_BRACKET
 %token     LEFT_BRACE
 %token     RIGHT_BRACE
+%token     BACKSLASH
 %type  <n> phrase
 %type  <n> modifier
 %type  <n> vector
@@ -99,6 +100,8 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
 	| phrase RIGHT_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3, $4); }
+	| phrase RIGHT_DYADIC BACKSLASH RIGHT_DYADIC modifier phrase
+	        { $$ = create_composite_node ($1, $2, $4, $5, $6); }
 	| phrase RIGHT_CLC_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
 	| phrase ASSIGN modifier phrase %prec ASSIGN
@@ -106,6 +109,8 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 					   OP_TYPE_CLC, $3, $4); }
 	| RIGHT_DYADIC modifier phrase %prec MONADIC
 		{ $$ = create_monadic_node ($1, OP_TYPE_GSL, $2, $3); }
+	| BACKSLASH RIGHT_DYADIC modifier phrase %prec MONADIC
+		{ $$ = create_monadic_node ($2, OP_TYPE_GSL, $3, $4); }
 	| RIGHT_CLC_DYADIC modifier phrase %prec MONADIC
 		{ $$ = create_monadic_node ($1, OP_TYPE_CLC, $2, $3); }
 	| BIF modifier LEFT_PAREN phrase RIGHT_PAREN %prec MONADIC
