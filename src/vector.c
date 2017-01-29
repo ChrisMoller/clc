@@ -24,6 +24,31 @@ static node_type_s null_node = { TYPE_NULL };
 #define dest_offset(r,c)  (((r) * node_cpx_vector_cols (dest)) + c)
 #define src_offset(s,r,c)  (((r) * (s)) + c)
 
+
+static node_u
+simple_dot_product (cpx_dyadic lop,  cpx_dyadic rop,
+		    node_cpx_vector_s *ls, node_cpx_vector_s *rs)
+{
+  node_u rc = NULL_NODE;
+
+  if (node_cpx_vector_rho (ls)[0] == node_cpx_vector_rho (rs)[0]) {
+    gsl_complex accum;
+    for (int q = 0; q < node_cpx_vector_rho (ls)[0]; q++) {
+      gsl_complex lv = node_cpx_vector_data (ls)[q];
+      gsl_complex rv = node_cpx_vector_data (rs)[q];
+      gsl_complex rres = (*rop)(lv, rv);
+      if (q == 0) accum = rres;
+      else accum = (*lop)(accum, rres);
+    }
+    rc = create_complex_node (0, accum);
+  }
+  else {
+    // fixme
+  }
+
+  return rc;
+}
+
 node_u
 do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
 {
@@ -156,6 +181,10 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
   node_cpx_vector_s *rs = node_cpx_vector (ra);
   int  lrhorho = node_cpx_vector_rhorho (ls);
   int  rrhorho = node_cpx_vector_rhorho (rs);
+
+  if (lrhorho == 1 && rrhorho == 1)
+    return simple_dot_product (lop, rop, ls, rs);
+  
   int *lrho    = node_cpx_vector_rho (ls);
   int *rrho    = node_cpx_vector_rho (rs);
   int  crhorho = lrhorho + rrhorho - 2;
