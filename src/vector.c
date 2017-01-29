@@ -52,123 +52,6 @@ simple_dot_product (cpx_dyadic lop,  cpx_dyadic rop,
 node_u
 do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
 {
-  
-/***
-    
-    -----------------------
-    
-    pA = 4 2, pB = 2 7 ==> pC = 4 7
-    
-    ------------------------
-            2 1 0
-    a: pA = 2 5 4
-
-1  2  3  4
-5  6  7  8
-9 10 11 12
-1  2  3  4
-5  6  7  8
-
-9 10 11 12
-1  2  3  4
-5  6  7  8
-9 10 11 12
-1  2  3  4
-
-
-            2 1 0
-    b: pB = 4 3 2
-
-1 2
-3 4
-5 6
-
-7 8
-1 2
-3 4
-
-5 6
-7 8
-1 2
-
-3 4
-5 6
-7 8
-
-
-            a a b b
-            2 1 1 0
-    ip pC = 2 5 3 2
-            3 2 1 0
-                                                     a a
-						     1 0
-                                               c[i j k l] = (a[i j *] +\* b[* k l])
-
- 42  52  c[0 0 0 0] = (a[0 0 *] +\* b[* 0 0])  c[0 0 0 1] = (a[0 0 *] +\* b[* 0 1])
- 46  56  c[0 0 1 0] = (a[0 0 *] +\* b[* 1 0])  c[0 0 1 1] = (a[0 0 *] +\* b[* 1 1])
- 42  52  c[0 0 2 0] = (a[0 0 *] +\* b[* 2 0])  c[0 0 2 1] = (a[0 0 *] +\* b[* 2 1])
-
-106 132  c[0 1 0 0]
-110 136  c[0 1 1 0]
-106 132  c[0 1 2 0]
-
-170 212  c[0 2 0 0] 
-174 216  c[0 2 1 0]
-170 212  c[0 2 2 0]
-
- 42  52  c[0 3 0 0]
- 46  56  c[0 3 1 0]
- 42  52  c[0 3 2 0]
-
-106 132  c[0 4 0 0]
-110 136  c[0 4 1 0]
-106 132  c[0 4 2 0]
-
-
-170 212
-174 216
-170 212
-
- 42  52
- 46  56
- 42  52
-
-106 132
-110 136
-106 132
-
-170 212
-174 216
-170 212
-
- 42  52  c[1 4 0 0]
- 46  56  c[1 4 1 0]      3 2 1 0
- 42  52  c[1 4 2 0] =  c[1 4 2 1] = (a[1 4 *] +\* b[* 2 1])
-                           
-
-    pA[lsb] = pB[msb]
-                                      ------------ pA[msb]
-                                      |  --------- pA[middle]
-				      |  |  -------pB[middle]
-                                      |  |  |  --- pB[lsb]
-                                      | --- | |
-    pA = 2 3 5 7, pB = 7 6 4 ==> pC = 2 3 5 6 4
-
-
-                                              1        0
-    pA = [1 4]  pB = [4 3]  pC = [1 3] = [pA[msb], pB[lsb]]
-                                     pA[lsb] == pB[msb]
-                [a b c]   
-    [1 2 3 4] * [d e f] = [p p p]
-                [g h i]
-                [j k l]
-
-
-    4 5 6     7  8            138 143
-    7 8 9     9 10	      220 244
-             11 12
- ***/
-  
   node_u rc = NULL_NODE;
   cpx_dyadic lop = get_op_dyadic (lsym);
   cpx_dyadic rop = get_op_dyadic (rsym);
@@ -187,16 +70,11 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
 
   int *lrho    = node_cpx_vector_rho (ls);
   int *rrho    = node_cpx_vector_rho (rs);
-
   int  crhorho = lrhorho + rrhorho - 2;
   int *crho    = malloc (crhorho * sizeof(int));
 
-
   if (lrho[0] == rrho[rrhorho - 1]) {
     int span = lrho[0];
-#if 0
-    printf ("span = %d\n", span);
-#endif
     crho[0] = rrho[0];
     if (lrhorho > 1) crho[crhorho - 1] = lrho[lrhorho - 1];
     int p = crhorho - 2;
@@ -205,59 +83,22 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
     if (rrhorho >= 3) 
       for (int i = 1; i < rrhorho - 1; i++) crho[p--] = rrho[i];
     
-#if 0
-    printf ("lrhorho = %d, lrho = ", lrhorho);
-    for (int i = 0; i < lrhorho; i++) printf ("%d ", lrho[i]);
-    printf ("\n");
-    
-    printf ("rrhorho = %d, rrho = ", rrhorho);
-    for (int i = 0; i < rrhorho; i++) printf ("%d ", rrho[i]);
-    printf ("\n");
-    
-    printf ("crhorho = %d, rho = ", crhorho);
-    for (int i = 0; i < crhorho; i++) printf ("%d ", crho[i]);
-    printf ("\n");
-#endif
-    /***
-	     0 1 2
-	lrho 4 5 2
-
-	lstride
-	      rho  str
-	    2  2   20   lrho[1] * lstride[1]
-	    1  5    4   lrho[0] * lstride[0]
-	    0  4    1   set
-     ***/
     int *lstride = malloc (lrhorho * sizeof(int));
     lstride[0] = 1;
     for(int i = 1; i < lrhorho; i++)
       lstride[i] = lrho[i-1] * lstride[i-1];
-#if 0
-    printf ("lstride = ");
-    for(int i = 0; i < lrhorho; i++) printf ("%d ", lstride[i]);
-    printf ("\n");
-#endif
 
     int *rstride = malloc (rrhorho * sizeof(int));
     rstride[0] = 1;
     for(int i = 1; i < rrhorho; i++)
       rstride[i] = rstride[i-1] * rrho[i-1];
-#if 0
-    printf ("rstride = ");
-    for(int i = 0; i < rrhorho; i++) printf ("%d ", rstride[i]);
-    printf ("\n");
-#endif
     int rinc = rstride[rrhorho - 1];
-#if 0
-    printf ("rinc = %d, lrhorho = %d\n", rinc, lrhorho);
-#endif
     
 
     int ct = 1;
     for (int i = crhorho - 1; i >= 0; i--) ct *= crho[i];
     int *cx = calloc (crhorho, sizeof(int));
 
-#if 1
     rc = create_complex_vector_node ();
     node_cpx_vector_s *dest = node_cpx_vector (rc);
     node_cpx_vector_rhorho (dest) = crhorho;
@@ -265,20 +106,9 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
     node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = ct;
     node_cpx_vector_data (dest) =
 	malloc (node_cpx_vector_next (dest) * sizeof(gsl_complex));
-#endif
     
     for (int i = 0; i < ct; i++) {
-#if 0
-      printf ("cx = ");
-      for (int i = crhorho - 1; i >= 0; i--) printf ("%d ", cx[i]);
-      printf ("\n");
-#endif
-      /***
-	  [a b c d] ==> left: [a b *]  right: [* 2 1]
-      ***/
-
       int p = 0;
-      
       int rd = 0;
       for (int j = 0; j < rrhorho - 1; j++, p++)
 	rd += cx[p] * rstride[j];
