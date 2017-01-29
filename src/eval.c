@@ -21,12 +21,14 @@
 #include "vector.h"
 #include "plot.h"
 
+#if 0
 typedef gsl_complex (*cpx_dyadic)(gsl_complex a, gsl_complex b);
 typedef gsl_complex (*cpx_monadic)(gsl_complex a);
 typedef node_u (*clcx_dyadic)(node_u modifier, node_u la, node_u ra);
 typedef node_u (*clc_dyadic)(gsl_complex *retp, node_u modifier,
 			     node_u la, node_u ra);
 typedef node_u (*clc_monadic)(node_u modifier, node_u arg);
+#endif
 
 typedef struct {
   void *dyadic;		/*cpx_dyadic*/
@@ -44,6 +46,12 @@ ops_s op_table[] = {
 #define op_monadic(s)		op_table[s].monadic
 #define op_nr_dyadic(s)		op_table[s].nr_dyadic_args
 #define op_nr_monadic(s)	op_table[s].nr_monadic_args
+
+void *
+get_op_dyadic (sym_e sym)
+{
+  return op_dyadic (sym);
+}
 
 static node_type_s null_node = { TYPE_NULL };
 #define NULL_NODE (node_u)(&null_node)

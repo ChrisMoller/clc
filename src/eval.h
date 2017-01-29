@@ -29,5 +29,6 @@ void    push_symtab ();
 void    pop_symtab ();
 void   *get_current_symtab ();
 void	do_assign (const char *name, node_u ra);
+void   *get_op_dyadic (sym_e sym);
 
 #endif /* EVAL_H */

@@ -207,5 +207,11 @@ struct _node_cpx_vector_type {
 #define node_cpx_vector_next(n)	((n)->next)
 #define node_cpx_vector_data(n)	((n)->data)
 #define NODE_CPX_VECTOR_INCR 16
+typedef gsl_complex (*cpx_dyadic)(gsl_complex a, gsl_complex b);
+typedef gsl_complex (*cpx_monadic)(gsl_complex a);
+typedef node_u (*clcx_dyadic)(node_u modifier, node_u la, node_u ra);
+typedef node_u (*clc_dyadic)(gsl_complex *retp, node_u modifier,
+			     node_u la, node_u ra);
+typedef node_u (*clc_monadic)(node_u modifier, node_u arg);
 
 #endif /* NODE_H */

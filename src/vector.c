@@ -137,10 +137,21 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
     [1 2 3 4] * [d e f] = [p p p]
                 [g h i]
                 [j k l]
-    
+
+
+    4 5 6     7  8            138 143
+    7 8 9     9 10	      220 244
+             11 12
  ***/
   
   node_u rc = NULL_NODE;
+  cpx_dyadic lop = get_op_dyadic (lsym);
+  cpx_dyadic rop = get_op_dyadic (rsym);
+  if (!lop || !rop) {
+    // fixme error
+    return rc;
+  }
+
   node_cpx_vector_s *ls = node_cpx_vector (la);
   node_cpx_vector_s *rs = node_cpx_vector (ra);
   int  lrhorho = node_cpx_vector_rhorho (ls);
@@ -151,7 +162,9 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
   int *crho    = malloc (crhorho * sizeof(int));
   if (lrho[0] == rrho[rrhorho - 1]) {
     int span = lrho[0];
+#if 0
     printf ("span = %d\n", span);
+#endif
     crho[0] = rrho[0];
     crho[crhorho - 1] = lrho[lrhorho - 1];
     int p = crhorho - 2;
@@ -160,7 +173,7 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
     if (rrhorho >= 3) 
       for (int i = 1; i < rrhorho - 1; i++) crho[p--] = rrho[i];
     
-#if 1
+#if 0
     printf ("lrhorho = %d, lrho = ", lrhorho);
     for (int i = 0; i < lrhorho; i++) printf ("%d ", lrho[i]);
     printf ("\n");
@@ -187,33 +200,37 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
     lstride[0] = 1;
     for(int i = 1; i < lrhorho; i++)
       lstride[i] = lrho[i-1] * lstride[i-1];
+#if 0
     printf ("lstride = ");
     for(int i = 0; i < lrhorho; i++) printf ("%d ", lstride[i]);
     printf ("\n");
+#endif
 
     int *rstride = malloc (rrhorho * sizeof(int));
     rstride[0] = 1;
     for(int i = 1; i < rrhorho; i++)
       rstride[i] = rstride[i-1] * rrho[i-1];
+#if 0
     printf ("rstride = ");
     for(int i = 0; i < rrhorho; i++) printf ("%d ", rstride[i]);
     printf ("\n");
+#endif
     int rinc = rstride[rrhorho - 1];
+#if 0
     printf ("rinc = %d, lrhorho = %d\n", rinc, lrhorho);
+#endif
     
 
     int ct = 1;
     for (int i = crhorho - 1; i >= 0; i--) ct *= crho[i];
-    printf ("ct = %d\n", ct);
     int *cx = calloc (crhorho, sizeof(int));
 
-#if 0
+#if 1
     rc = create_complex_vector_node ();
     node_cpx_vector_s *dest = node_cpx_vector (rc);
     node_cpx_vector_rhorho (dest) = crhorho;
-    node_cpx_vector_rho (dest) = cx;
-    node_cpx_vector_next (dest) = node_cpx_vector_max (dest) =
-      node_cpx_vector_next (ls) + node_cpx_vector_next (rs);
+    node_cpx_vector_rho (dest) = crho;
+    node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = ct;
     node_cpx_vector_data (dest) =
 	malloc (node_cpx_vector_next (dest) * sizeof(gsl_complex));
 #endif
@@ -231,36 +248,23 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
       int p = 0;
       
       int rd = 0;
-      //printf ("rd = ");
-      // b0 b1  *  rs[0] rs[1]
-      for (int j = 0; j < rrhorho - 1; j++, p++) {
+      for (int j = 0; j < rrhorho - 1; j++, p++)
 	rd += cx[p] * rstride[j];
-	//printf ("((cx[%d]) %d * (rstride[%d]) %d) ", p, cx[p], j, rstride[j]);
-      }
-      //printf (" = %d\n", rd);
 
       int ld = 0;
-      // a1 a2 * ls[1] ls[2]
-      //printf ("ld = ");
-      for (int j = 1; j < lrhorho; j++, p++) {
+      for (int j = 1; j < lrhorho; j++, p++)
 	ld += cx[p] * lstride[j];
-	//printf ("((cx[%d]) %d * (lstride[%d]) %d) ", p, cx[p], j, lstride[j]);
-      }
-      //printf (" = %d\n", ld);
-
-      //      printf ("\n");
 
       int q, r;
+      gsl_complex accum;
       for (q = 0, r = 0; q < span; q++, r += rinc) {
-	printf ("%0d [%d %d] ", i, ld + q, rd + r);
+	gsl_complex lv = node_cpx_vector_data (ls)[ld + q];
+	gsl_complex rv = node_cpx_vector_data (rs)[rd + r];
+	gsl_complex rres = (*rop)(lv, rv);
+	if (q == 0) accum = rres;
+	else accum = (*lop)(accum, rres);
       }
-      printf ("\n");
-
-
-
-
-
-
+      node_cpx_vector_data (dest)[i] = accum;
       
       int carry = 1;
       for (int i = 0; carry && i < crhorho; i++) {
