@@ -184,18 +184,21 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
 
   if (lrhorho == 1 && rrhorho == 1)
     return simple_dot_product (lop, rop, ls, rs);
-  
+
   int *lrho    = node_cpx_vector_rho (ls);
   int *rrho    = node_cpx_vector_rho (rs);
+
   int  crhorho = lrhorho + rrhorho - 2;
   int *crho    = malloc (crhorho * sizeof(int));
+
+
   if (lrho[0] == rrho[rrhorho - 1]) {
     int span = lrho[0];
 #if 0
     printf ("span = %d\n", span);
 #endif
     crho[0] = rrho[0];
-    crho[crhorho - 1] = lrho[lrhorho - 1];
+    if (lrhorho > 1) crho[crhorho - 1] = lrho[lrhorho - 1];
     int p = crhorho - 2;
     if (lrhorho >= 3) 
       for (int i = 1; i < lrhorho - 1; i++) crho[p--] = lrho[i];
