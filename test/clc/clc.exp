@@ -2,7 +2,13 @@ set tool "clc"
 set exp_internal 1
 set vect "\[ .4 .5 .6 \]"
 set vect2 "\[ .3 .5 .7 \]"
+set vect3 "\[ 2 3 \]"
+set vect3r "\[ 3 2 \]"
+set vect4 "\[ 7 8 9 10 11 12 \]"
+set vect5 "\[ 4 5 6 \]"
+set vect6 "\[ 7 8 9 \]"
 set dims "\[ 5 5 \]"
+set dotprod "+\\*"
 set testdata {
     {"\"3 + 4\"" "7" }
     {"\"3 - 4\"" "-1" }
@@ -75,6 +81,10 @@ set testdata {
     {"\"$vect2 ?!> $vect\"" "1 1 0" }
     {"\"$vect2 ?!>= $vect\"" "1 0 0" }
     {"\"$vect2 ?!= $vect\"" "1 0 1" }
+
+    {"\"($vect3 # $vect4) $dotprod $vect5 \"" "122 167"}
+    {"\"$vect5 $dotprod ($vect3r # $vect4) \"" "139 154"}
+    {"\"$vect5 $dotprod $vect6 \"" "122"}
 
     {"\"1+2+3\"" "6" }
     {"\"1-2-3\"" "2" }
