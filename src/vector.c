@@ -24,7 +24,6 @@ static node_type_s null_node = { TYPE_NULL };
 #define dest_offset(r,c)  (((r) * node_cpx_vector_cols (dest)) + c)
 #define src_offset(s,r,c)  (((r) * (s)) + c)
 
-
 node_u
 do_outer (sym_e rsym, node_u la, node_u ra, node_u mo)
 {
@@ -40,8 +39,6 @@ do_outer (sym_e rsym, node_u la, node_u ra, node_u mo)
   int  lrhorho = node_cpx_vector_rhorho (ls);
   int  rrhorho = node_cpx_vector_rhorho (rs);
   int  crhorho = lrhorho + rrhorho;
-  int *lrho    = node_cpx_vector_rho (ls);
-  int *rrho    = node_cpx_vector_rho (rs);
   int *crho    = malloc (crhorho * sizeof(int));
   /***
            2 1 0         2 1 0            5 4 3 2 1 0
@@ -50,22 +47,7 @@ do_outer (sym_e rsym, node_u la, node_u ra, node_u mo)
   memmove (crho, node_cpx_vector_rho (rs), rrhorho * sizeof(int));
   memmove (&crho[rrhorho], node_cpx_vector_rho (ls), lrhorho * sizeof(int));
   int ct = 1;
-  int *cstride = malloc (crhorho * sizeof(int));
-  for (int i = 0; i < crhorho; i++) {
-    ct *= crho[i];
-    if (i >= 1) cstride[i] = crho[i-1] * cstride[i-1];
-  }
-  int *cx = calloc (crhorho, sizeof(int));
-
-  int *lstride = malloc (lrhorho * sizeof(int));
-  lstride[0] = 1;
-  for(int i = 1; i < lrhorho; i++)
-    lstride[i] = lrho[i-1] * lstride[i-1];
-
-  int *rstride = malloc (rrhorho * sizeof(int));
-  rstride[0] = 1;
-  for(int i = 1; i < rrhorho; i++)
-    rstride[i] = rstride[i-1] * rrho[i-1];
+  for (int i = 0; i < crhorho; i++) ct *= crho[i];
 
   rc = create_complex_vector_node ();
   node_cpx_vector_s *dest = node_cpx_vector (rc);
@@ -75,29 +57,15 @@ do_outer (sym_e rsym, node_u la, node_u ra, node_u mo)
   node_cpx_vector_data (dest) =
     malloc (node_cpx_vector_next (dest) * sizeof(gsl_complex));
 
+  int rd, ld;
   for (int i = 0; i < ct; i++) {
-    int p = 0;
-    int rd = 0;
-    for (int j = 0; j < rrhorho; j++, p++)
-      rd += cx[p] * rstride[j];
-
-    int ld = 0;
-    for (int j = 0; j < lrhorho; j++, p++)
-      ld += cx[p] * lstride[j];
 
     gsl_complex lv = node_cpx_vector_data (ls)[ld];
     gsl_complex rv = node_cpx_vector_data (rs)[rd];
     node_cpx_vector_data (dest)[i] = (*rop)(lv, rv);
-
-    int carry = 1;
-    for (int i = 0; carry && i < crhorho; i++) {
-      if (carry) {
-	if (++cx[i] >= crho[i]) cx[i] = 0;
-	else {
-	  carry = 0;
-	  break;
-	}
-      }
+    if (++rd >= node_cpx_vector_next (rs)) {
+      rd = 0;
+      ld++;
     }
   }
   return rc;
@@ -152,7 +120,6 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
   int *crho    = malloc (crhorho * sizeof(int));
 
   if (lrho[0] == rrho[rrhorho - 1]) {
-    int span = lrho[0];
     crho[0] = rrho[0];
     if (lrhorho > 1) crho[crhorho - 1] = lrho[lrhorho - 1];
     int p = crhorho - 2;
@@ -160,22 +127,12 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
       for (int i = 1; i < lrhorho - 1; i++) crho[p--] = lrho[i];
     if (rrhorho >= 3) 
       for (int i = 1; i < rrhorho - 1; i++) crho[p--] = rrho[i];
-    
-    int *lstride = malloc (lrhorho * sizeof(int));
-    lstride[0] = 1;
-    for(int i = 1; i < lrhorho; i++)
-      lstride[i] = lrho[i-1] * lstride[i-1];
 
-    int *rstride = malloc (rrhorho * sizeof(int));
-    rstride[0] = 1;
-    for(int i = 1; i < rrhorho; i++)
-      rstride[i] = rstride[i-1] * rrho[i-1];
-    int rinc = rstride[rrhorho - 1];
+    int rinc = 1;
+    for(int i = 1; i < rrhorho; i++) rinc *= rrho[i-1];
     
-
     int ct = 1;
     for (int i = crhorho - 1; i >= 0; i--) ct *= crho[i];
-    int *cx = calloc (crhorho, sizeof(int));
 
     rc = create_complex_vector_node ();
     node_cpx_vector_s *dest = node_cpx_vector (rc);
@@ -185,19 +142,12 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
     node_cpx_vector_data (dest) =
 	malloc (node_cpx_vector_next (dest) * sizeof(gsl_complex));
     
+    int rd = 0;
+    int ld = 0;
     for (int i = 0; i < ct; i++) {
-      int p = 0;
-      int rd = 0;
-      for (int j = 0; j < rrhorho - 1; j++, p++)
-	rd += cx[p] * rstride[j];
-
-      int ld = 0;
-      for (int j = 1; j < lrhorho; j++, p++)
-	ld += cx[p] * lstride[j];
-
       int q, r;
       gsl_complex accum;
-      for (q = 0, r = 0; q < span; q++, r += rinc) {
+      for (q = 0, r = 0; q < lrho[0]; q++, r += rinc) {
 	gsl_complex lv = node_cpx_vector_data (ls)[ld + q];
 	gsl_complex rv = node_cpx_vector_data (rs)[rd + r];
 	gsl_complex rres = (*rop)(lv, rv);
@@ -205,23 +155,12 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
 	else accum = (*lop)(accum, rres);
       }
       node_cpx_vector_data (dest)[i] = accum;
-      
-      int carry = 1;
-      for (int i = 0; carry && i < crhorho; i++) {
-	if (carry) {
-	  if (++cx[i] >= crho[i]) cx[i] = 0;
-	  else {
-	    carry = 0;
-	    break;
-	  }
-	}
+
+      if (++rd >= rinc) {
+	rd = 0;
+	ld += lrho[0];
       }
     }
-
-    free (lstride);
-    free (rstride);
-    free (cx);
-    
   }
   else {
     // fixme dim mismatch
