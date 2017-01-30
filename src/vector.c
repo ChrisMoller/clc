@@ -25,6 +25,84 @@ static node_type_s null_node = { TYPE_NULL };
 #define src_offset(s,r,c)  (((r) * (s)) + c)
 
 
+node_u
+do_outer (sym_e rsym, node_u la, node_u ra, node_u mo)
+{
+  node_u rc = NULL_NODE;
+  cpx_dyadic rop = get_op_dyadic (rsym);
+  if (!rop) {
+    // fixme error
+    return rc;
+  }
+
+  node_cpx_vector_s *ls = node_cpx_vector (la);
+  node_cpx_vector_s *rs = node_cpx_vector (ra);
+  int  lrhorho = node_cpx_vector_rhorho (ls);
+  int  rrhorho = node_cpx_vector_rhorho (rs);
+  int  crhorho = lrhorho + rrhorho;
+  int *lrho    = node_cpx_vector_rho (ls);
+  int *rrho    = node_cpx_vector_rho (rs);
+  int *crho    = malloc (crhorho * sizeof(int));
+  /***
+           2 1 0         2 1 0            5 4 3 2 1 0
+      rrho[c b a]   lrho[f e d]   crhorho[f e d c b a]
+   ***/
+  memmove (crho, node_cpx_vector_rho (rs), rrhorho * sizeof(int));
+  memmove (&crho[rrhorho], node_cpx_vector_rho (ls), lrhorho * sizeof(int));
+  int ct = 1;
+  int *cstride = malloc (crhorho * sizeof(int));
+  for (int i = 0; i < crhorho; i++) {
+    ct *= crho[i];
+    if (i >= 1) cstride[i] = crho[i-1] * cstride[i-1];
+  }
+  int *cx = calloc (crhorho, sizeof(int));
+
+  int *lstride = malloc (lrhorho * sizeof(int));
+  lstride[0] = 1;
+  for(int i = 1; i < lrhorho; i++)
+    lstride[i] = lrho[i-1] * lstride[i-1];
+
+  int *rstride = malloc (rrhorho * sizeof(int));
+  rstride[0] = 1;
+  for(int i = 1; i < rrhorho; i++)
+    rstride[i] = rstride[i-1] * rrho[i-1];
+
+  rc = create_complex_vector_node ();
+  node_cpx_vector_s *dest = node_cpx_vector (rc);
+  node_cpx_vector_rhorho (dest) = crhorho;
+  node_cpx_vector_rho (dest) = crho;
+  node_cpx_vector_next (dest) = node_cpx_vector_max (dest) = ct;
+  node_cpx_vector_data (dest) =
+    malloc (node_cpx_vector_next (dest) * sizeof(gsl_complex));
+
+  for (int i = 0; i < ct; i++) {
+    int p = 0;
+    int rd = 0;
+    for (int j = 0; j < rrhorho; j++, p++)
+      rd += cx[p] * rstride[j];
+
+    int ld = 0;
+    for (int j = 0; j < lrhorho; j++, p++)
+      ld += cx[p] * lstride[j];
+
+    gsl_complex lv = node_cpx_vector_data (ls)[ld];
+    gsl_complex rv = node_cpx_vector_data (rs)[rd];
+    node_cpx_vector_data (dest)[i] = (*rop)(lv, rv);
+
+    int carry = 1;
+    for (int i = 0; carry && i < crhorho; i++) {
+      if (carry) {
+	if (++cx[i] >= crho[i]) cx[i] = 0;
+	else {
+	  carry = 0;
+	  break;
+	}
+      }
+    }
+  }
+  return rc;
+}
+
 static node_u
 simple_dot_product (cpx_dyadic lop,  cpx_dyadic rop,
 		    node_cpx_vector_s *ls, node_cpx_vector_s *rs)

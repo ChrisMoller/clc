@@ -100,6 +100,8 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
 	| phrase RIGHT_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3, $4); }
+	| phrase BACKSLASH RIGHT_DYADIC modifier phrase
+	        { $$ = create_composite_node ($1, SYM_NULL, $3, $4, $5); }
 	| phrase RIGHT_DYADIC BACKSLASH RIGHT_DYADIC modifier phrase
 	        { $$ = create_composite_node ($1, $2, $4, $5, $6); }
 	| phrase RIGHT_CLC_DYADIC modifier phrase

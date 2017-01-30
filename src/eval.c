@@ -683,7 +683,7 @@ do_composite (int *noshow, node_u node)
     if (rsym != SYM_NULL) {
       if (lsym == SYM_NULL) {				// outer or scanner
 	if (get_type (la) == TYPE_CPX_VECTOR) {		// outer
-	  printf ("outer rsym = %d\n", rsym);
+	  rc = do_outer (rsym, la, ra, mo);
 	}
 	else {						// scanner
 	  printf ("scanner rsym = %d\n", rsym);
