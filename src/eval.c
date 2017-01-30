@@ -183,8 +183,8 @@ clc_random (node_u modifier, node_u ra)
 	node_cpx_vector_next (vs) = node_cpx_vector_max (vs) =
 	  node_cpx_vector_next (rs);
 	node_cpx_vector_rhorho (vs) = node_cpx_vector_rhorho (rs);
-	node_cpx_vector_rhorho (vs) =
-	  node_cpx_vector_rhorho (vs) * sizeof(int);
+	node_cpx_vector_rho (vs) =
+	  malloc (node_cpx_vector_rhorho (vs) * sizeof(int));
 	memmove (node_cpx_vector_rho (vs),
 		 node_cpx_vector_rho (rs),
 		 node_cpx_vector_rhorho (vs) * sizeof(int));
@@ -685,8 +685,8 @@ do_composite (int *noshow, node_u node)
 	if (get_type (la) == TYPE_CPX_VECTOR) {		// outer
 	  rc = do_outer (rsym, la, ra, mo);
 	}
-	else {						// scanner
-	  printf ("scanner rsym = %d\n", rsym);
+	else {
+	  // fixme bad la
 	}
       }
       else {						// inner op
