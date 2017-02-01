@@ -29,10 +29,16 @@ static node_type_s null_node = { TYPE_NULL };
 #define dest_offset(r,c)  (((r) * node_cpx_vector_cols (dest)) + c)
 #define src_offset(s,r,c)  (((r) * (s)) + c)
 
+typedef enum {
+  MODE_XY,
+  MODE_CPX,
+  MODE_MULTI
+} plot_mode_e;
+
 typedef struct {
   FILE 		*out_stream;
   PLINT		 bg_colour[3];
-  int		 mode_xy;
+  plot_mode_e	 mode;
   char		*xlabel;
   char		*ylabel;
   char		*toplabel;
@@ -49,7 +55,10 @@ typedef struct {
 #define plot_options_bg_colour_red(p)	((p)->bg_colour[COLOUR_IDX_RED])
 #define plot_options_bg_colour_green(p)	((p)->bg_colour[COLOUR_IDX_GREEN])
 #define plot_options_bg_colour_blue(p)	((p)->bg_colour[COLOUR_IDX_BLUE])
-#define plot_options_mode_xy(p)		((p)->mode_xy)
+#define plot_options_mode(p)		((p)->mode)
+#define plot_options_mode_xy(p)		((p)->mode == MODE_XY)
+#define plot_options_mode_complex(p)	((p)->mode == MODE_CPX)
+#define plot_options_mode_multi(p)	((p)->mode == MODE_MULTI)
 #define plot_options_xlabel(p)		((p)->xlabel)
 #define plot_options_ylabel(p)		((p)->ylabel)
 #define plot_options_toplabel(p)	((p)->toplabel)
@@ -60,10 +69,12 @@ typedef struct {
 plot_options_s plot_options = {
   .out_stream	= NULL,
   .bg_colour	= {0, 0, 0},
-  .mode_xy	= 0,
+  .mode		= MODE_MULTI,
   .xlabel	= NULL,
   .ylabel	= NULL,
-  .toplabel	= NULL
+  .toplabel	= NULL,
+  .width	= 512,
+  .height	= 480
 };
 
 void
@@ -167,13 +178,19 @@ parseopts_set_height (node_u argi)
 void
 parseopts_set_mode_xy (node_u argi)
 {
-  plot_options_mode_xy (&plot_options)  = 1;
+  plot_options_mode (&plot_options)  = MODE_XY;
 }
 
 void
-parseopts_set_mode_noxy (node_u argi)
+parseopts_set_mode_complex (node_u argi)
 {
-  plot_options_mode_xy (&plot_options)  = 0;
+  plot_options_mode (&plot_options)  = MODE_CPX;
+}
+
+void
+parseopts_set_mode_multi (node_u argi)
+{
+  plot_options_mode (&plot_options)  = MODE_MULTI;
 }
 
 void
@@ -255,7 +272,8 @@ static const ENTRY plotopts[] = {
   {"bgcolour",	parseopts_set_bg_colour},
   {"bgcolor",	parseopts_set_bg_colour},
   {"xy",	parseopts_set_mode_xy},
-  {"noxy",	parseopts_set_mode_noxy},
+  {"complex",	parseopts_set_mode_complex},
+  {"multi",	parseopts_set_mode_multi},
   {"xlabel",	parseopts_set_xlabel},
   {"ylabel",	parseopts_set_ylabel},
   {"toplabel",	parseopts_set_toplabel},
@@ -371,11 +389,80 @@ handle_option (char *lv, node_u arg)
   }
 }
 
+typedef struct {
+  PLFLT *xvec;
+  PLFLT *yvec;
+  int count;
+} curves_s;
+#define curves_xvec(c)  ((c)->xvec)
+#define curves_yvec(c)  ((c)->yvec)
+#define curves_count(c) ((c)->count)
+static curves_s *curves = NULL;
+static int curves_next = 0;
+static int curves_max  = 0;
+#define CURVE_INCR 8
+
+static curves_s *
+create_curve () {
+  if (curves_max <= curves_next) {
+    curves_max += CURVE_INCR;
+    curves = realloc (curves, curves_max * sizeof(curves_s));
+  }
+  return &curves[curves_next++];
+}
+
+typedef struct {
+  double min_x;
+  double max_x;
+  double min_y;
+  double max_y;
+} extremes_s;
+#define min_x(e) ((e)->min_x)
+#define max_x(e) ((e)->max_x)
+#define min_y(e) ((e)->min_y)
+#define max_y(e) ((e)->max_y)
+
+static void
+single_plot (node_cpx_vector_s *ls, extremes_s *extremes)
+{
+  if (node_cpx_vector_rho (ls)[0] > 1) {
+    if (plot_options_mode_xy (&plot_options)) {
+      // ./clc 'plot {"xy", bgcolour = "purple"} (sin(::{.2}30))'
+      int ct = node_cpx_vector_rho (ls)[0];
+      curves_s *curve = create_curve ();
+      curves_count (curve) = ct;
+      curves_xvec (curve) = malloc (ct * sizeof(PLFLT));
+      curves_yvec (curve) = malloc (ct * sizeof(PLFLT));
+      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
+	double xv = (double)i;
+	double yv = GSL_REAL (node_cpx_vector_data (ls)[i]);
+	if (min_x (extremes) > xv) min_x (extremes) = xv;
+	if (max_x (extremes) < xv) max_x (extremes) = xv;
+	if (min_y (extremes) > yv) min_y (extremes) = yv;
+	if (max_y (extremes) < yv) max_y (extremes) = yv;
+	curves_xvec (curve)[i] = (PLFLT)xv;
+	curves_yvec (curve)[i] = (PLFLT)yv;
+      }
+    }
+  }
+}
+  
 node_u
 clc_plot (node_u modifier, node_u argi)
 {
+
+  /***
+      rhorho == 1, 2d real x vs index
+                   3d complex x vs index
+      rhorho == 2, 2d real y vs real x
+                   3d real y on complex x plane, surface or mesh
+                   2d multiple real x vs index 
+      rhorho == 3, 3d real x, y, and z, surface or mesh
+   ***/
   node_u rc = NULL_NODE;
   node_u arg = do_eval (NULL, argi);
+
+  print_node (0, modifier);
 
   if (!commands_table_initialised) {
     int i;
@@ -417,64 +504,60 @@ clc_plot (node_u modifier, node_u argi)
   
   init_plplot ();
 
-  typedef struct {
-    PLFLT *xvec;
-    PLFLT *yvec;
-    int count;
-  } curves_s;
-#define curves_xvec(c)  ((c)->xvec)
-#define curves_yvec(c)  ((c)->yvec)
-#define curves_count(c) ((c)->count)
-  curves_s *curves = NULL;
-  int curves_next = 0;
-  int curves_max  = 0;
-#define CURVE_INCR 8
-
-  curves_s *create_curve () {
-    if (curves_max <= curves_next) {
-      curves_max += CURVE_INCR;
-      curves = realloc (curves, curves_max * sizeof(curves_s));
-    }
-    return &curves[curves_next++];
-  }
-
-  double min_x = MAXDOUBLE;
-  double max_x = MINDOUBLE;
-  double min_y = MAXDOUBLE;
-  double max_y = MINDOUBLE;
+  extremes_s extremes = {MAXDOUBLE, MINDOUBLE, MAXDOUBLE, MINDOUBLE};
   if (get_type (arg) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *ls = node_cpx_vector (arg);
-#if 1
-    int lrows = 0;
-    int lcols = 0;
-#else
-    int lrows = node_cpx_vector_rows (ls);
-    int lcols = node_cpx_vector_cols (ls);
-#endif
-    if (lrows <= 1) {			// just a simple plot
-      // ./clc 'plot {bgcolour = "purple"} (sin(::{.2}30))'
-      if (lcols > 1) {
-	curves_s *curve = create_curve ();
-	curves_count (curve) = lcols;
-	curves_xvec (curve) = malloc (lcols * sizeof(PLFLT));
-	curves_yvec (curve) = malloc (lcols * sizeof(PLFLT));
-	for (int i = 0; i < lcols; i++) {
-	  double xv = (double)i;
-	  double yv = GSL_REAL (node_cpx_vector_data (ls)[i]);
-	  if (min_x > xv) min_x = xv;
-	  if (max_x < xv) max_x = xv;
-	  if (min_y > yv) min_y = yv;
-	  if (max_y < yv) max_y = yv;
-	  curves_xvec (curve)[i] = (PLFLT)xv;
-	  curves_yvec (curve)[i] = (PLFLT)yv;
-	}
-      }
+
+    if (node_cpx_vector_rhorho (ls) == 1) {		// just a simple plot
+      single_plot (ls, &extremes);
     }
-    else {
+    else if (node_cpx_vector_rhorho (ls) == 2) {
       // ./clc 'plot ([2 30]<>(sin(::{.2}30)),(cos(::{.2}30)))'
       // ./clc 'plot {"xy"} ([2 30]<>(sin(::{.2}30)),(cos(::{.2}30)))'
-      if (lcols > 1) {
-	if (plot_options_mode_xy (&plot_options)) {
+      if (plot_options_mode_xy (&plot_options)) {
+      }
+      else if (plot_options_mode_complex (&plot_options)) {
+      }
+      else {	// multiplot
+      }
+    }
+    else if (node_cpx_vector_rhorho (ls) == 3) {
+    }
+    else {
+      // fixme don't know handle 4-space
+    }
+
+    plenv ((PLFLT)min_x (&extremes),
+	   (PLFLT)max_x (&extremes),
+	   (PLFLT)min_y (&extremes),
+	   (PLFLT)max_y (&extremes),
+	   0, plot_options_axes (&plot_options));
+    pllab (plot_options_xlabel (&plot_options),
+	   plot_options_ylabel (&plot_options),
+	   plot_options_toplabel (&plot_options));
+
+    for (int i = 0; i < curves_next; i++) {
+      plcol0 ((PLINT)((i +1) % (MAX_PLOT_COLOURS - 1)));
+      plline ((PLINT)curves_count (&curves[i]),
+	      curves_xvec (&curves[i]),
+	      curves_yvec (&curves[i]));
+      free (curves_xvec (&curves[i]));
+      free (curves_yvec (&curves[i]));
+    }
+    curves_next = 0;
+  }
+  plend ();
+
+  plot_options_out_stream (&plot_options) = NULL;
+  
+  pop_symtab ();
+  return rc;
+}
+
+#if 0
+      
+      if (node_cpx_vector_rho (ls)[0] > 1) {
+	if (1) {
 	  int r, off;
 	  for (r = 1, off = lcols; r < lrows; r++) {
 	    curves_s *curve = create_curve ();
@@ -518,30 +601,8 @@ clc_plot (node_u modifier, node_u argi)
   else {
     // fixme error
   }
+#endif
 
   //     xmin xmax ymin ymax
-
-  plenv ((PLFLT)min_x, (PLFLT)max_x, (PLFLT)min_y, (PLFLT)max_y, 0,
-	 plot_options_axes (&plot_options));
-  pllab (plot_options_xlabel (&plot_options),
-	 plot_options_ylabel (&plot_options),
-	 plot_options_toplabel (&plot_options));
-
-  for (int i = 0; i < curves_next; i++) {
-    plcol0 ((PLINT)((i +1) % (MAX_PLOT_COLOURS - 1)));
-    plline ((PLINT)curves_count (&curves[i]),
-	    curves_xvec (&curves[i]),
-	    curves_yvec (&curves[i]));
-    free (curves_xvec (&curves[i]));
-    free (curves_yvec (&curves[i]));
-  }
-  curves_next = 0;
-  plend ();
-
-  plot_options_out_stream (&plot_options) = NULL;
-  
-  pop_symtab ();
-  return rc;
-}
 
 // '[3 8]<>((sin(::{.2}8)), (cos(::{.2}8)), (8<>.6))'

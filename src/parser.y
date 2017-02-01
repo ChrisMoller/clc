@@ -29,7 +29,7 @@ void yyerror (char const *);
   sym_e	      d;
 }
 
-%token	   PLOT
+%left  <d> CATENATE
 %token	   SET
 %token	   EOP
 %token	   EOS
@@ -37,21 +37,20 @@ void yyerror (char const *);
 %token <s> SYMBOL
 %token <s> QSTRING
 %right     ASSIGN
-%left  <d> CATENATE
 %right <d> RIGHT_DYADIC
 %right <d> RIGHT_CLC_DYADIC
 %right <d> BIF
 %right <d> CLC_BIF
 %right     MONADIC
+%type  <n> modifier
 %token     LEFT_PAREN
 %token     RIGHT_PAREN
 %token     LEFT_BRACKET
 %token     RIGHT_BRACKET
 %token     LEFT_BRACE
 %token     RIGHT_BRACE
-%token     BACKSLASH
+%right     BACKSLASH
 %type  <n> phrase
-%type  <n> modifier
 %type  <n> vector
 %type  <n> matrix
 %type  <n> matrices
@@ -98,12 +97,14 @@ phrase:   SYMBOL  { $$ = create_string_node (TYPE_SYMBOL, $1); }
 	| NUMBER  { $$ = create_complex_node (0, $1); }
 	| phrase CATENATE modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
+
 	| phrase RIGHT_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_GSL, $3, $4); }
-	| phrase BACKSLASH RIGHT_DYADIC modifier phrase
-	        { $$ = create_composite_node ($1, SYM_NULL, $3, $4, $5); }
 	| phrase RIGHT_DYADIC BACKSLASH RIGHT_DYADIC modifier phrase
 	        { $$ = create_composite_node ($1, $2, $4, $5, $6); }
+
+	| phrase BACKSLASH RIGHT_DYADIC modifier phrase
+	        { $$ = create_composite_node ($1, SYM_NULL, $3, $4, $5); }
 	| phrase RIGHT_CLC_DYADIC modifier phrase
 		{ $$ = create_dyadic_node ($1, $2, OP_TYPE_CLC, $3, $4); }
 	| phrase ASSIGN modifier phrase %prec ASSIGN

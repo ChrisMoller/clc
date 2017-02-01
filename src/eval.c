@@ -1069,13 +1069,14 @@ do_eval (int *noshow, node_u node)
       node_u arg = do_eval (NULL, node_monadic_arg (monad));
       sym_e sym = node_monadic_op (monad);
       op_type_e op_type = node_monadic_op_type (monad);
-      node_u modifier = do_eval (NULL, node_monadic_modifier (monad));
 
       if (op_type == OP_TYPE_CLC) {
 	clc_monadic op = op_monadic (sym);
-	if (op) rc = (*op)(modifier, arg);
+	if (op) rc = (*op)(node_monadic_modifier (monad), arg);
 	return rc;
       }
+      
+      //      node_u modifier = do_eval (NULL, node_monadic_modifier (monad));
 
       switch(get_type (arg)) {
       case TYPE_CPX_VECTOR:
@@ -1169,6 +1170,12 @@ print_indices (int rhorho, int *ix)
   printf (" * *]\n");
 }
 
+#undef ENTRY
+#define ENTRY(l,s,d,m,dc,mc,dd,md) #s
+static char *sym_names[] = {
+#include "opsdata.h"
+};
+
 void
 print_node (int indent, node_u node)
 {
@@ -1231,7 +1238,8 @@ print_node (int indent, node_u node)
     {
       node_dyadic_s *dyad = node_dyadic (node);
       sym_e sym = node_dyadic_op (dyad);
-      fprintf (stdout, "%*sdyadic sym = %d\n", indent, " ", sym);
+      fprintf (stdout, "%*sdyadic sym = %s (%d)\n",
+	       indent, " ", sym_names[sym]);
       fprintf (stdout, "%*sleft arg:\n", indent, " ");
       print_node (indent+2, node_dyadic_la (dyad));
       fprintf (stdout, "%*sright arg:\n", indent, " ");

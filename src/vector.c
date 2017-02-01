@@ -40,10 +40,6 @@ do_outer (sym_e rsym, node_u la, node_u ra, node_u mo)
   int  rrhorho = node_cpx_vector_rhorho (rs);
   int  crhorho = lrhorho + rrhorho;
   int *crho    = malloc (crhorho * sizeof(int));
-  /***
-           2 1 0         2 1 0            5 4 3 2 1 0
-      rrho[c b a]   lrho[f e d]   crhorho[f e d c b a]
-   ***/
   memmove (crho, node_cpx_vector_rho (rs), rrhorho * sizeof(int));
   memmove (&crho[rrhorho], node_cpx_vector_rho (ls), lrhorho * sizeof(int));
   int ct = 1;
@@ -59,7 +55,6 @@ do_outer (sym_e rsym, node_u la, node_u ra, node_u mo)
 
   int rd, ld;
   for (int i = 0; i < ct; i++) {
-
     gsl_complex lv = node_cpx_vector_data (ls)[ld];
     gsl_complex rv = node_cpx_vector_data (rs)[rd];
     node_cpx_vector_data (dest)[i] = (*rop)(lv, rv);
@@ -129,7 +124,7 @@ do_inner (sym_e lsym, sym_e rsym, node_u la, node_u ra, node_u mo)
       for (int i = 1; i < rrhorho - 1; i++) crho[p--] = rrho[i];
 
     int rinc = 1;
-    for(int i = 1; i < rrhorho; i++) rinc *= rrho[i-1];
+    for(int i = 0; i < rrhorho - 1; i++) rinc *= rrho[i];
     
     int ct = 1;
     for (int i = crhorho - 1; i >= 0; i--) ct *= crho[i];
