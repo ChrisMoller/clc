@@ -796,9 +796,15 @@ do_eval (int *noshow, node_u node)
     {
       node_dyadic_s *dyad = node_dyadic (node);
       sym_e sym = node_dyadic_op (dyad);
-      node_u ra = do_eval (NULL, node_dyadic_ra (dyad));
+      node_u ra = node_dyadic_ra (dyad);
+      if (sym != SYM_COMMA) ra = do_eval (NULL, ra);
       node_u la = node_dyadic_la (dyad);
-      if (sym != SYM_EQUAL || get_type (la) != TYPE_SYMBOL)
+      /***
+	  (sym != SYM_EQUAL || get_type (la) != TYPE_SYMBOL) ==
+	  !(sym == SYM_EQUAL  && get_type (la) == TYPE_SYMBOL
+       ***/
+      if (!(sym == SYM_EQUAL  && get_type (la) == TYPE_SYMBOL) &&
+	  sym != SYM_COMMA)
 	  la = do_eval (NULL, la);
       node_u modifier = do_eval (NULL, node_dyadic_modifier (dyad));
       op_type_e op_type = node_dyadic_op_type (dyad);
@@ -807,6 +813,9 @@ do_eval (int *noshow, node_u node)
       if (op_type == OP_TYPE_CLC) {
 	if (noshow && sym == SYM_EQUAL) *noshow = 1;
 	clc_dyadic op = op_dyadic (sym);
+
+	if (sym == SYM_EQUAL)
+	  return clc_assign (modifier, la, ra);
 
 	if (sym == SYM_POUND || sym == SYM_COMMA ||
 	    sym == SYM_COLCOL) {

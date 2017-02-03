@@ -863,10 +863,12 @@ clc_shape (node_u modifier, node_u argi)
 }
 
 node_u
-clc_catenate (node_u modifier, node_u lni, node_u rni)
+clc_catenate (node_u modifier, node_u ln, node_u rn)
 {
+#if 0
   node_u ln = do_eval (NULL, lni);
   node_u rn = do_eval (NULL, rni);
+#endif
   node_u rc = NULL_NODE;
   node_u ra = rn;
   node_u la = ln;

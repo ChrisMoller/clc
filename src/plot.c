@@ -462,8 +462,6 @@ clc_plot (node_u modifier, node_u argi)
   node_u rc = NULL_NODE;
   node_u arg = do_eval (NULL, argi);
 
-  print_node (0, modifier);
-
   if (!commands_table_initialised) {
     int i;
     ENTRY *ret;
@@ -482,9 +480,6 @@ clc_plot (node_u modifier, node_u argi)
   push_symtab ();
   node_u rm = do_eval (NULL, modifier);
 
-  if (get_current_symtab ()) {
-    twalk (get_current_symtab (), var_action);
-  }
   if (get_type (rm) == TYPE_LIST) {
     node_list_s *list   = node_list (rm);
     for (int i = 0; i < node_list_next (list); i++) {
@@ -494,12 +489,18 @@ clc_plot (node_u modifier, node_u argi)
 	char *lv = node_string_value (ls);
 	handle_option (lv, NULL_NODE);
       }
+      else if (get_type (ln) == TYPE_DYADIC) {
+	do_eval (NULL, ln);
+      }
     }
   }
   else if (get_type (rm) == TYPE_LITERAL) {
     node_string_s *ls = node_string (rm);
     char *lv = node_string_value (ls);
     handle_option (lv, NULL_NODE);
+  }
+  if (get_current_symtab ()) {
+    twalk (get_current_symtab (), var_action);
   }
   
   init_plplot ();
