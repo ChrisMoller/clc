@@ -392,10 +392,12 @@ handle_option (char *lv, node_u arg)
 typedef struct {
   PLFLT *xvec;
   PLFLT *yvec;
+  PLFLT *zvec;
   int count;
 } curves_s;
 #define curves_xvec(c)  ((c)->xvec)
 #define curves_yvec(c)  ((c)->yvec)
+#define curves_zvec(c)  ((c)->zvec)
 #define curves_count(c) ((c)->count)
 static curves_s *curves = NULL;
 static int curves_next = 0;
@@ -416,33 +418,46 @@ typedef struct {
   double max_x;
   double min_y;
   double max_y;
+  double min_z;
+  double max_z;
 } extremes_s;
 #define min_x(e) ((e)->min_x)
 #define max_x(e) ((e)->max_x)
 #define min_y(e) ((e)->min_y)
 #define max_y(e) ((e)->max_y)
+#define min_z(e) ((e)->min_z)
+#define max_z(e) ((e)->max_z)
 
 static void
 single_plot (node_cpx_vector_s *ls, extremes_s *extremes)
 {
   if (node_cpx_vector_rho (ls)[0] > 1) {
-    if (plot_options_mode_xy (&plot_options)) {
-      // ./clc 'plot {"xy", bgcolour = "purple"} (sin(::{.2}30))'
-      int ct = node_cpx_vector_rho (ls)[0];
-      curves_s *curve = create_curve ();
-      curves_count (curve) = ct;
-      curves_xvec (curve) = malloc (ct * sizeof(PLFLT));
-      curves_yvec (curve) = malloc (ct * sizeof(PLFLT));
-      for (int i = 0; i < node_cpx_vector_next (ls); i++) {
-	double xv = (double)i;
-	double yv = GSL_REAL (node_cpx_vector_data (ls)[i]);
-	if (min_x (extremes) > xv) min_x (extremes) = xv;
-	if (max_x (extremes) < xv) max_x (extremes) = xv;
-	if (min_y (extremes) > yv) min_y (extremes) = yv;
-	if (max_y (extremes) < yv) max_y (extremes) = yv;
-	curves_xvec (curve)[i] = (PLFLT)xv;
-	curves_yvec (curve)[i] = (PLFLT)yv;
-      }
+    // ./clc 'plot {"xy", bgcolour = "purple"} (sin(::{.2}30))'
+    int ct = node_cpx_vector_rho (ls)[0];
+    curves_s *curve = create_curve ();
+    curves_count (curve) = ct;
+    curves_xvec (curve) = malloc (ct * sizeof(PLFLT));
+    curves_yvec (curve) = malloc (ct * sizeof(PLFLT));
+    curves_zvec (curve) = malloc (ct * sizeof(PLFLT));
+    for (int i = 0; i < node_cpx_vector_next (ls); i++) {
+      double xv = (double)i;
+      double yv = GSL_REAL (node_cpx_vector_data (ls)[i]);
+      double zv = GSL_IMAG (node_cpx_vector_data (ls)[i]);
+      if (min_x (extremes) > xv)
+	min_x (extremes) = xv;
+      if (max_x (extremes) < xv)
+	max_x (extremes) = xv;
+      if (min_y (extremes) > yv)
+	min_y (extremes) = yv;
+      if (max_y (extremes) < yv)
+	max_y (extremes) = yv;
+      if (min_z (extremes) > zv)
+	min_z (extremes) = zv;
+      if (max_z (extremes) < zv)
+	max_z (extremes) = zv;
+      curves_xvec (curve)[i] = (PLFLT)xv;
+      curves_yvec (curve)[i] = (PLFLT)yv;
+      curves_zvec (curve)[i] = (PLFLT)zv;
     }
   }
 }
@@ -505,7 +520,9 @@ clc_plot (node_u modifier, node_u argi)
   
   init_plplot ();
 
-  extremes_s extremes = {MAXDOUBLE, MINDOUBLE, MAXDOUBLE, MINDOUBLE};
+  extremes_s extremes = {MAXDOUBLE, -MAXDOUBLE,
+			 MAXDOUBLE, -MAXDOUBLE,
+			 MAXDOUBLE, -MAXDOUBLE};
   if (get_type (arg) == TYPE_CPX_VECTOR) {
     node_cpx_vector_s *ls = node_cpx_vector (arg);
 
@@ -528,22 +545,68 @@ clc_plot (node_u modifier, node_u argi)
       // fixme don't know handle 4-space
     }
 
-    plenv ((PLFLT)min_x (&extremes),
-	   (PLFLT)max_x (&extremes),
-	   (PLFLT)min_y (&extremes),
-	   (PLFLT)max_y (&extremes),
-	   0, plot_options_axes (&plot_options));
-    pllab (plot_options_xlabel (&plot_options),
-	   plot_options_ylabel (&plot_options),
-	   plot_options_toplabel (&plot_options));
+    if (min_z (&extremes) == 0.0 && max_z (&extremes) == 0.0) {
+      plenv ((PLFLT)min_x (&extremes),
+	     (PLFLT)max_x (&extremes),
+	     (PLFLT)min_y (&extremes),
+	     (PLFLT)max_y (&extremes),
+	     0, plot_options_axes (&plot_options));
+      pllab (plot_options_xlabel (&plot_options),
+	     plot_options_ylabel (&plot_options),
+	     plot_options_toplabel (&plot_options));
 
-    for (int i = 0; i < curves_next; i++) {
-      plcol0 ((PLINT)((i +1) % (MAX_PLOT_COLOURS - 1)));
-      plline ((PLINT)curves_count (&curves[i]),
-	      curves_xvec (&curves[i]),
-	      curves_yvec (&curves[i]));
-      free (curves_xvec (&curves[i]));
-      free (curves_yvec (&curves[i]));
+      for (int i = 0; i < curves_next; i++) {
+	plcol0 ((PLINT)((i +1) % (MAX_PLOT_COLOURS - 1)));
+	plline ((PLINT)curves_count (&curves[i]),
+		curves_xvec (&curves[i]),
+		curves_yvec (&curves[i]));
+	free (curves_xvec (&curves[i]));
+	free (curves_yvec (&curves[i]));
+      }
+    }
+    else {
+      pladv (0);
+      plvpor( 0.0, 1.0, 0.0, 1.0 );
+      plwind( -512.00, 512.0, -200.0, 600.0);
+      
+      plw3d (512.0, // basex,
+	     512.0, // basey,
+	     512.0, // height,
+	     (PLFLT)min_x (&extremes),        // xmin,
+	     (PLFLT)max_x (&extremes),        // xmax,
+	     (PLFLT)min_y (&extremes),        // ymin,
+	     (PLFLT)max_y (&extremes),        // ymax,
+	     (PLFLT)min_z (&extremes),        // zmin,
+	     (PLFLT)max_z (&extremes),        // zmax,
+	     20.0,  // alt,
+	     -30.0);        // az: pos cw from top, neg ccw from top
+
+      plmtex ("t", -1.5, 0.5, 0.5, plot_options_toplabel (&plot_options));
+
+      plbox3 ("bnstu",		// xopt,
+	      "Index",		// xlabel,      
+	      0.0,		// xtick,
+	      0,		// nxsub,
+	      
+	      "bnstu",		// yopt,
+	      "Imaginary",	// ylabel,      
+	      0.0,		// ytick,
+	      0,		// nysub,
+	      
+	      "bcdmnstuv",	// zopt,
+	      "Real",		// zlabel,      
+	      0.0,		// ztick,
+	      0);		// nzsub
+      
+      for (int i = 0; i < curves_next; i++) {
+	plline3 ((PLINT)curves_count (&curves[i]),
+		 curves_xvec (&curves[i]),
+		 curves_yvec (&curves[i]),
+		 curves_zvec (&curves[i]));
+	free (curves_xvec (&curves[i]));
+	free (curves_yvec (&curves[i]));
+	free (curves_zvec (&curves[i]));
+      }
     }
     curves_next = 0;
   }
